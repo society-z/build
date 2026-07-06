@@ -35,52 +35,52 @@ Rules:
 | `outputs` | object | yes | JSON-Schema-style map of the returned object's fields |
 | `example` | object | yes | `{ call: <inputs>, result: <expected shape> }` |
 | `smoke` | string | yes | command to run the test, e.g. `node smoke.mjs` |
-| `author` | object | yes | `{ passport_id, github_id, wallet }` — the attribution triple |
+| `author` | object | yes | `{ member_id, github_id, wallet }` — the attribution triple |
 | `config` | object | no | non-secret config keys with placeholder values; secrets go in env |
 | `tags` | string[] | no | discovery tags, e.g. `["solana","gate"]` |
 | `witnessed` | object | no | filled in on merge: `{ merged_at, entry_hash, pr }` — do not set by hand |
 
 ### Author attribution triple
 
-Every skill is credited to a passport, a GitHub id, and a wallet:
+Every skill is credited to a member id, a GitHub id, and a wallet:
 
 ```json
 "author": {
-  "passport_id": "psp_...",     // free Crest agent passport (crest_passport tool)
-  "github_id": 12345,           // numeric GitHub id (survives username changes)
-  "wallet": "<base58-or-0x>"    // the wallet that passed the holder gate
+  "member_id": "mem_...",        // assigned at wallet-link time (linking/), yours alone
+  "github_id": 12345,            // numeric GitHub id (survives username changes)
+  "wallet": "<base58-or-0x>"     // the wallet that passed the holder gate
 }
 ```
 
-The `passport_id` is the durable identity. The witness chain hash-links the merged entry to it,
-so your record survives key rotation and username changes.
+The `member_id` is the durable identity. Society Z's own record hash-links the merged entry to
+it, so your record survives key rotation and username changes.
 
 ## Minimal `skill.json` example
 
 ```json
 {
-  "name": "whois",
+  "name": "verify",
   "version": "0.1.0",
-  "description": "Return a one-screen reputation card for a Base address.",
+  "description": "Re-derive Society Z's own hash-chained record and report whether it's intact.",
   "runtime": "node",
   "entry": "index.mjs#run",
   "inputs": {
-    "address": { "type": "string", "description": "Base (EVM) address", "required": true }
+    "path": { "type": "string", "description": "path to a record.jsonl file", "required": false }
   },
   "outputs": {
-    "address": { "type": "string" },
-    "profile": { "type": "object", "description": "onchain_profile snapshot" },
-    "counterparty": { "type": "object", "description": "Witnos check_counterparty verdict" },
-    "agentrank": { "type": "object", "description": "AgentRank score" },
+    "count": { "type": "number" },
+    "head": { "type": "string" },
+    "valid": { "type": "boolean" },
+    "broken_at": { "type": "number", "description": "index of the first break, or null" },
     "verdict": { "type": "string", "description": "one-line human summary" }
   },
   "example": {
-    "call": { "address": "0xEXAMPLE...beef" },
-    "result": { "verdict": "known payer, low risk", "agentrank": { "score": 0.82 } }
+    "call": { "path": "record.jsonl" },
+    "result": { "count": 2, "valid": true, "broken_at": null }
   },
   "smoke": "node smoke.mjs",
-  "author": { "passport_id": "psp_TODO", "github_id": 0, "wallet": "TODO" },
-  "tags": ["base", "reputation", "crest"]
+  "author": { "member_id": "mem_TODO", "github_id": 0, "wallet": "TODO" },
+  "tags": ["verification", "record", "no-external-dependency"]
 }
 ```
 

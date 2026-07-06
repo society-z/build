@@ -34,5 +34,5 @@ node smoke.mjs   # prints SMOKE PASS / SMOKE FAIL, exits 0 on pass
 
 ## Author
 
-Fill in `author` in `skill.json` with your `passport_id`, `github_id`, and `wallet`.
-Mint a free passport via the Crest `crest_passport` tool.
+Fill in `author` in `skill.json` with your `member_id`, `github_id`, and `wallet`. Your
+`member_id` is assigned automatically when you link your wallet to GitHub — nothing to mint.

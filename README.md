@@ -35,8 +35,8 @@ Both are built and tested:
 - [`maintainer/`](./maintainer/) — the real, tested merge bot: resolves a PR author's
   linked wallet, checks the gate, runs review, and merges. Auto-merge is off in v1; a
   human maintainer clicks merge.
-- [`skills/whois`](./skills/whois/) — the first worked example: a reputation card for any
-  address, assembled from Crest's onchain profile, Witnos, and AgentRank.
+- [`skills/verify`](./skills/verify/) — the second worked example: re-derives Society Z's own
+  hash-chained record and reports whether it's intact. No external service.
 
 Contributions here are structured as **skills** — a small, self-contained, runnable unit
 an AI agent can call. See [`SKILL_SPEC.md`](./SKILL_SPEC.md) for the manifest format.
@@ -71,8 +71,9 @@ GitHub's own Copilot coding agent, Replit Agent, OpenHands):
                      before merging (it does not itself flip the holder-gate status).
 6. HUMAN MERGE       a maintainer reviews and clicks merge (v1 — no auto-merge)
 7. WRITTEN TO THE RECORD
-                     on merge, the entry is hash-chained into Crest's witness chain and
-                     attributed to your wallet. Permanent. Public. Yours.
+                     on merge, the entry is hash-chained into Society Z's own record and
+                     attributed to your wallet. Permanent. Public. Yours. Re-derive it
+                     yourself with skills/verify — no company to trust.
 ```
 
 You never hand anyone a private key. The **only** signature the system ever asks for is
@@ -88,8 +89,8 @@ on-chain**.
 - **Standing is earned, not bought.** Holding $Z gets you in the door. Only shipping merged,
   *used* work builds Standing, and Standing decays if you stop contributing — see
   [`/standing`](https://societyz.xyz/standing) for why that's the point, not a bug.
-- **Usage-weighted.** Contributions get called or run, so authors are weighted by real
-  usage (AgentRank / Witnos), not by how many they shipped. The anti-slop mechanism.
+- **Usage-weighted.** Contributions get called or run, so authors are weighted by real,
+  distinct usage, not by how many they shipped. The anti-slop mechanism.
 
 ## Repo layout
 
@@ -101,7 +102,7 @@ build/
   skills/
     _template/           <- copy this to start a new skill
     gate/                <- GENESIS: the $Z merge-gate skill
-    whois/               <- WORKED EXAMPLE: reputation card for any address
+    verify/              <- WORKED EXAMPLE: re-derive and check the record yourself
   maintainer/            <- the real, tested merge bot (resolves wallet, checks $Z, reviews, merges)
   linking/               <- the real, tested Sign-In-With-Solana wallet<->GitHub binding
   .github/
@@ -116,9 +117,12 @@ builders — and it must become a live construction site before $Z mints, not st
 lot. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) to add the next thing, starting with
 build.societyz.xyz itself.
 
-Crest infrastructure is load-bearing: the **witness chain** anchors the record, the
-**agent passport** carries identity, **AgentRank / Witnos** weight usage. A generic token
-community would have to fake all three. We already run them.
+The record is Society Z's own: a local, hash-chained log, in this repo, that anyone can clone
+and re-derive without asking anyone's permission or trusting anyone's word — run `skills/verify`
+yourself. Membership identity is a member id assigned at wallet-link time, not an issued
+credential from anywhere else. Crest Deployment Systems built this genesis code and is the
+first to buy in and build on it, same as any member — it does not operate the record, and
+nothing here depends on it staying online.
 
 More at [societyz.xyz](https://societyz.xyz) · [@therealsocietyz](https://x.com/therealsocietyz)
 

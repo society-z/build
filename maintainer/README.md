@@ -38,15 +38,16 @@ The whole flow is one dependency-injected function, `handlePullRequest(pr, deps)
 | On-chain $Z balance read (Helius) | **Real** (`gate` skill) | — |
 | Holder-gate threshold math + fail-closed | **Real** | — |
 | GitHub status / comment / label / merge API | **Real** (`realGithub`, fetch) | — |
-| Witnessed record (hash-chained JSONL) | **Real, local** | `jsonlRecord` → `witnessChainRecord` (anchor to Crest) |
+| Record (hash-chained JSONL) | **Real, complete, local** | none needed — `jsonlRecord` is the live mechanism, not a stub |
 | Links table (`github_id → wallet`) | **Stubbed** (JSON file) | `fileLinks` → `supabaseLinks` (SIWS Supabase table) |
 | AI review judge | **Stubbed** (deterministic `stubJudge`) | `stubJudge` → `llmJudge` (real LLM; `REVIEW_MODEL`) |
+| External record checkpoint (e.g. OpenTimestamps) | **Not built** | future addition to `record.mjs`, run by Society Z's own bot — not a Crest service |
 
 The stub judge passes a PR iff its smoke test passes AND it touches exactly one skill folder
 (the "one skill per PR" rule). Where the real LLM call goes is marked in
 [`review.mjs`](./review.mjs) (`llmJudge`). Where the real link lookup goes is marked in
-[`links.mjs`](./links.mjs) (`supabaseLinks`). Where the witness-chain anchor goes is marked in
-[`record.mjs`](./record.mjs) (`witnessChainRecord`).
+[`links.mjs`](./links.mjs) (`supabaseLinks`). The record itself needs no swap: `jsonlRecord`
+is real and sufficient on its own; external checkpointing is a future addition, not a fix.
 
 ## Run the tests
 

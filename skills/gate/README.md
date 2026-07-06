@@ -12,7 +12,7 @@ own mouth. The first name in the ledger is whoever built the door everyone else 
    (filtered by the $Z mint), summing `uiAmount` across the owner's token accounts.
 2. Compares to the configured threshold.
 3. Returns a verdict object, optionally **signed** (ed25519) by the gate key so the verdict is
-   independently verifiable and can be appended to the witness chain.
+   independently verifiable and can be appended to Society Z's own record.
 
 It **never signs or moves funds.** The only signature it emits is an attestation over its own
 verdict. This is the read that the `society-z/holder-gate` status check calls per PR (see
@@ -76,5 +76,5 @@ node smoke.mjs   # stubs the RPC, asserts pass/fail math + verdict shape. No key
 
 ## Author
 
-Maintainers' genesis skill. Fill `author` in `skill.json` with the maintainer passport that
+Maintainers' genesis skill. Fill `author` in `skill.json` with the maintainer member id that
 builds the door.

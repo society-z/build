@@ -48,17 +48,17 @@ function baseConfig(extra = {}) {
 function prTouchingWhois(overrides = {}) {
   return {
     number: 210,
-    title: "skill: whois",
+    title: "skill: verify",
     user: { id: 4242, login: "example-holder" },
     head: { sha: "headsha42" },
-    files: [{ filename: "skills/whois/index.mjs", additions: 40, deletions: 2 }],
+    files: [{ filename: "skills/verify/index.mjs", additions: 40, deletions: 2 }],
     ...overrides,
   };
 }
 
 const links = memoryLinks({
-  4242: { github_login: "example-holder", wallet: "HolderWallet111", passport_id: "psp_holder" },
-  7777: { github_login: "example-nonholder", wallet: "PoorWallet111", passport_id: "psp_poor" },
+  4242: { github_login: "example-holder", wallet: "HolderWallet111", member_id: "mem_holder" },
+  7777: { github_login: "example-nonholder", wallet: "PoorWallet111", member_id: "mem_poor" },
   // 9999 intentionally absent -> no link
 });
 

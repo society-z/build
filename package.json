@@ -7,7 +7,7 @@
   "scripts": {
     "smoke": "for d in skills/*/; do [ -f \"$d/smoke.mjs\" ] && (echo \"== $d ==\" && node \"$d/smoke.mjs\") || true; done",
     "smoke:gate": "node skills/gate/smoke.mjs",
-    "smoke:whois": "node skills/whois/smoke.mjs",
+    "smoke:verify": "node skills/verify/smoke.mjs",
     "test:maintainer": "node maintainer/test/e2e.test.mjs",
     "test:linking": "node linking/test/link.test.mjs"
   }

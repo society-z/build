@@ -118,7 +118,7 @@ export async function handlePullRequest(pr, deps) {
   const entry = await record.append({
     github_id: link.github_id,
     github_login: link.github_login,
-    passport_id: link.passport_id,
+    member_id: link.member_id,
     wallet: link.wallet,
     pr: ref,
     merge_sha: merge.sha,
@@ -128,7 +128,7 @@ export async function handlePullRequest(pr, deps) {
     merged_at: new Date().toISOString(),
   });
 
-  await github.comment({ number: pr.number, body: `Merged and witnessed. Record hash \`${entry.hash.slice(0, 16)}…\` credited to ${link.passport_id || "@" + (link.github_login || link.github_id)}.` });
+  await github.comment({ number: pr.number, body: `Merged and witnessed. Record hash \`${entry.hash.slice(0, 16)}…\` credited to ${link.member_id || "@" + (link.github_login || link.github_id)}.` });
 
   return outcome({ merged: true, gate_pass: true, review_pass: true, reason: "merged", verdict, reviewResult, record: entry, merge_sha: merge.sha });
 }

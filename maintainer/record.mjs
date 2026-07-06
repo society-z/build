@@ -1,14 +1,16 @@
-// record — the witnessed contribution ledger.
+// record — Society Z's own contribution ledger.
 //
-// On every merge the bot appends one signed, hash-chained entry crediting the contributor. v1
-// writes to a local record.jsonl (append-only, sha256 prev_hash chain — the same discipline as
-// Crest's witness chain, contribution-mechanism.md §5). The interface is a single append() so it
-// swaps cleanly for the real anchor later:
+// On every merge the bot appends one signed, hash-chained entry crediting the contributor:
+// a local, append-only record.jsonl, sha256 prev_hash chained. No external service. Anyone
+// can clone the repo and re-derive the whole chain themselves — see skills/verify.
 //
-//   const record = jsonlRecord("record.jsonl");     // <- v1, today
-//   const record = witnessChainRecord({...});        // <- later: anchor to Crest's witness chain
+// This is real today, not a placeholder:
 //
-// Any implementation provides:  async append(entry) -> { ...entry, prev_hash, hash }
+//   const record = jsonlRecord("record.jsonl");     // <- live
+//
+// A future external checkpoint (e.g. OpenTimestamps) can extend this later, run by Society Z's
+// own maintainer bot, documented in this repo. Not built yet; the local chain is honest and
+// sufficient for now. Any implementation provides: async append(entry) -> {...entry, prev_hash, hash}
 
 import { createHash } from "node:crypto";
 import { appendFileSync, readFileSync, existsSync } from "node:fs";
@@ -18,7 +20,7 @@ function canonical(e) {
   return JSON.stringify({
     github_id: e.github_id,
     github_login: e.github_login ?? null,
-    passport_id: e.passport_id ?? null,
+    member_id: e.member_id ?? null,
     wallet: e.wallet,
     pr: e.pr,
     merge_sha: e.merge_sha,
@@ -43,7 +45,7 @@ function lastHash(path) {
   catch { return "0".repeat(64); }
 }
 
-// v1 STUB: append to a local JSONL file, hash-chained.
+// The live record: append to a local JSONL file, hash-chained. Not a stub — this is what runs.
 export function jsonlRecord(path) {
   return {
     async append(entry) {
@@ -53,20 +55,6 @@ export function jsonlRecord(path) {
       const line = { ...withPrev, hash };
       appendFileSync(path, JSON.stringify(line) + "\n");
       return line;
-    },
-  };
-}
-
-// LATER (documented stub): anchor each entry to Crest's witness chain instead of / in addition to
-// the local file. Keep the append(entry) -> {..., hash} contract. The gate already produces a
-// signed verdict (entry.gate_signature); this is where you hash-link + OTS/on-chain anchor it.
-export function witnessChainRecord() {
-  return {
-    async append() {
-      throw new Error(
-        "witnessChainRecord not implemented — POST the hash-chained entry to Crest's witness " +
-          "chain (append + anchor). Andy signs any on-chain anchor tx; the bot only prepares it."
-      );
     },
   };
 }

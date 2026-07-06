@@ -4,14 +4,14 @@
   "4242": {
     "github_login": "example-holder",
     "wallet": "9UH61sREPLACEwithARealBase58Pubkey11111111LMA",
-    "passport_id": "psp_example_holder",
+    "member_id": "mem_example_holder",
     "principal_github_id": null,
     "revoked": false
   },
   "7777": {
     "github_login": "example-nonholder",
     "wallet": "2BelowThresholdWalletPubkey1111111111111111111",
-    "passport_id": "psp_example_nonholder",
+    "member_id": "mem_example_nonholder",
     "revoked": false
   }
 }

@@ -15,6 +15,6 @@
     "result": { "result": "HELLO" }
   },
   "smoke": "node smoke.mjs",
-  "author": { "passport_id": "psp_TODO", "github_id": 0, "wallet": "TODO" },
+  "author": { "member_id": "mem_TODO", "github_id": 0, "wallet": "TODO" },
   "tags": []
 }

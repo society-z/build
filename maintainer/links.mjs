@@ -12,7 +12,7 @@
 //   const links = supabaseLinks(URL, SERVICE_KEY);    // <- real, at launch (implement getLink)
 //
 // Any implementation only has to provide:  async getLink(githubId) -> Link | null
-// where Link = { github_id, github_login, wallet, passport_id?, principal_github_id?, revoked? }
+// where Link = { github_id, github_login, wallet, member_id?, principal_github_id?, revoked? }
 
 import { readFileSync } from "node:fs";
 
@@ -25,7 +25,7 @@ function normalize(row) {
     github_id: Number(row.github_id),
     github_login: row.github_login || null,
     wallet: row.wallet,
-    passport_id: row.passport_id || null,
+    member_id: row.member_id || null,
     principal_github_id: row.principal_github_id ?? null,
     revoked: !!row.revoked,
   };

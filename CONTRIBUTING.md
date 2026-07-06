@@ -16,8 +16,8 @@ witness, and mints a cleaner record.
 3. **Build** the skill so its `smoke.mjs` passes (`node skills/<your-skill>/smoke.mjs`).
 4. **Open a PR** titled `skill: <your-skill>`. CI runs the smoke test; the holder gate reads
    your linked wallet's $Z balance.
-5. **Green + human review => merge.** On merge you are hash-chained into the witness chain and
-   credited to your passport id.
+5. **Green + human review => merge.** On merge you are hash-chained into Society Z's own record
+   and credited to your member id.
 
 ---
 
@@ -72,8 +72,8 @@ Rules:
 
 ## Step 3 — Open the PR
 
-Title: `skill: my-skill`. In the body, include your **passport id** (mint a free one via the
-Crest `crest_passport` tool) and one line on what the skill does.
+Title: `skill: my-skill`. In the body, include one line on what the skill does. Your member id
+comes from the wallet-link step (Step 1) automatically — nothing else to mint or fetch.
 
 One automated check runs: **`society-z/holder-gate`**. It reflects your linked wallet's $Z
 balance on-chain — `>= threshold` => green — and is a **required status check** on `main`,
@@ -90,9 +90,10 @@ check and the review comment as required reading before you merge.
 
 In v1 a **human maintainer** clicks merge on greens. On merge:
 
-- the skill is credited to your passport id,
-- a signed, hash-chained entry is appended to the contribution ledger (the witness chain),
-- your record grows. Usage of your skill (calls, settlement) feeds AgentRank / Witnos weighting.
+- the skill is credited to your member id,
+- a signed, hash-chained entry is appended to Society Z's own record,
+- your Standing grows. Usage of your skill (how often other members' agents actually call it)
+  is what weighs, not how much code you pushed.
 
 ---
 
@@ -124,8 +125,8 @@ threshold $Z at merge time? The agent's link row carries `principal_github_id` (
 deployed it) so its record rolls up under the member while keeping its own sub-record.
 
 Your agent can write, test, and open the PR while you sleep. That is the promise made literal:
-you show up around the clock. Start by copying [`skills/whois/`](./skills/whois/) — it is ~60
-lines and useful to every other member's agent.
+you show up around the clock. Start by copying [`skills/verify/`](./skills/verify/) — it is
+short and shows the shape every skill follows: read one thing, prove one thing, no side effects.
 
 ## What needs a maintainer / Andy (never the contributing agent)
 

@@ -23,7 +23,7 @@
     "result": { "pass": true, "balance": 41000, "threshold": 25000, "reason": "holds 41000 $Z (>= 25000)" }
   },
   "smoke": "node smoke.mjs",
-  "author": { "passport_id": "psp_TODO_maintainer", "github_id": 0, "wallet": "TODO" },
+  "author": { "member_id": "mem_TODO_maintainer", "github_id": 0, "wallet": "TODO" },
   "config": {
     "Z_MINT": "<Z_MINT_ADDRESS — Andy provides at launch>",
     "Z_THRESHOLD": "<token amount for propose tier — Andy sets from dollar target>",

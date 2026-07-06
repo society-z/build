@@ -1,0 +1,26 @@
+{
+  "name": "verify",
+  "version": "0.1.0",
+  "description": "Re-derive Society Z's own hash-chained record from raw entries and report whether the chain is intact, with no external service.",
+  "runtime": "node",
+  "entry": "index.mjs#run",
+  "inputs": {
+    "path": { "type": "string", "description": "path to a record.jsonl file (default: record.jsonl in cwd)", "required": false },
+    "entries": { "type": "array", "description": "already-loaded entry objects, used instead of reading a file", "required": false }
+  },
+  "outputs": {
+    "count": { "type": "number", "description": "number of entries checked" },
+    "head": { "type": "string", "description": "hash of the last entry, or null if empty" },
+    "valid": { "type": "boolean", "description": "true if every entry recomputes correctly and links to the one before it" },
+    "broken_at": { "type": "number", "description": "index of the first broken entry, or null if valid" },
+    "reason": { "type": "string", "description": "one-line human summary" },
+    "checked_at": { "type": "string", "description": "ISO8601" }
+  },
+  "example": {
+    "call": { "path": "../../maintainer/record.jsonl" },
+    "result": { "count": 2, "valid": true, "broken_at": null, "reason": "every entry recomputes correctly" }
+  },
+  "smoke": "node smoke.mjs",
+  "author": { "member_id": "mem_maintainer", "github_id": 0, "wallet": "TODO" },
+  "tags": ["verification", "record", "genesis", "no-external-dependency"]
+}

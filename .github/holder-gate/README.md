@@ -48,8 +48,8 @@ async function checkPR(pr) {
 function pass(msg, signature) {
   setStatus("society-z/holder-gate", "success", msg);
   addLabel("holder ✓"); comment(msg);
-  // on MERGE (not here): append a signed, hash-chained entry to the witness chain, credited
-  // to link.passport_id. v.signature is the gate's attestation over the verdict.
+  // on MERGE (not here): append a signed, hash-chained entry to Society Z's own record,
+  // credited to link.member_id. v.signature is the gate's attestation over the verdict.
 }
 function fail(reason, msg) {
   setStatus("society-z/holder-gate", "failure", msg);
@@ -79,7 +79,7 @@ function fail(reason, msg) {
 | `HELIUS_RPC_URL` | Helius RPC incl. API key | maintainer |
 | `SECOND_RPC_URL` | optional second provider (agreement / fail-closed) | maintainer |
 | `LINK_DB_URL` / `LINK_DB_SERVICE_KEY` | read the `links` table (github_id -> wallet) | maintainer |
-| `GATE_SIGNING_SECRET_KEY` | ed25519 key that signs verdicts for the witness chain | maintainer |
+| `GATE_SIGNING_SECRET_KEY` | ed25519 key that signs verdicts for the record | maintainer |
 
 ## The `links` table (owned by the linking page, read by this bot)
 
@@ -88,7 +88,7 @@ create table links (
   github_id      bigint primary key,      -- numeric, survives username changes
   github_login   text not null,
   wallet         text not null,           -- base58 pubkey, SIWS-proven control
-  passport_id    text,                    -- Crest passport the record credits
+  member_id    text,                    -- durable identifier the record credits
   principal_github_id bigint,             -- if this is an agent: the human who deployed it
   linked_at      timestamptz not null default now(),
   last_relink_at timestamptz,             -- enforce re-link cooldown (~7d)
@@ -104,5 +104,5 @@ auditable/re-verifiable from signatures alone even if the DB is compromised.
 
 - The `Z_MINT` address and `Z_THRESHOLD` (config the gate reads).
 - Owning/installing the holder-gate GitHub App on the Society org.
-- Any on-chain anchoring signature for the witness chain (agent prepares unsigned tx; Andy signs).
-  The gate itself is **read-only on-chain, forever**.
+- Any future on-chain anchoring signature for the record, if external checkpointing is built
+  (agent prepares unsigned tx; Andy signs). The gate itself is **read-only on-chain, forever**.

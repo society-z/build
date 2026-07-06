@@ -4,13 +4,13 @@
 
 - **Name:** `<skills/your-skill>`
 - **What it does (one line):**
-- **Passport id:** `psp_...`  <!-- mint a free one via Crest crest_passport -->
+- **Member id:** assigned automatically at wallet-link time (nothing to mint)
 
 ## Checklist
 
 - [ ] Folder follows `SKILL_SPEC.md` (skill.json, README.md, index.mjs, smoke.mjs)
 - [ ] `node skills/<name>/smoke.mjs` passes locally (no private keys, no paid calls)
-- [ ] `author` in `skill.json` filled in (passport_id, github_id, wallet)
+- [ ] `author` in `skill.json` filled in (member_id, github_id, wallet)
 - [ ] No secrets committed (config via env / config.json which is gitignored)
 - [ ] I have linked my wallet ↔ GitHub at https://link.societyz.xyz
 
