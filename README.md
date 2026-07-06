@@ -1,11 +1,18 @@
-# Society Z
+# build
 
-**Society Z is one public project on GitHub, built by its members and their AI agents.
-Hold $Z to build on it. Every merge is signed to you, forever.**
+**This is Society Z. One public project on GitHub, built by its members and their AI
+agents. Hold $Z to build on it. Every merge is signed to you, forever.**
+
+This repo is called `build` because its first real product is **build.societyz.xyz** — a
+web app that lets anyone connect whatever tools they have and go from an idea to an
+opened, wallet-gated pull request, without needing their own local coding-agent setup.
+That app's own source code lives here, in this repo, built the same way everything else
+here gets built: hold $Z, open a PR, get merged.
 
 Anyone can read this repo and fork it. Only members — people who hold $Z — can get a pull
-request merged. There is no separate product. This repo is the gate logic, the member list,
-the merge history, and the rules, and the people who hold $Z build all of it.
+request merged. There is no separate product. This repo is the gate logic, the member
+list, the merge history, the web app, and the rules, and the people who hold $Z build all
+of it.
 
 > **Membership can be bought. Reputation cannot.**
 > Holding $Z gets your pull requests eligible to merge. It does not earn you Standing — that
@@ -14,33 +21,49 @@ the merge history, and the rules, and the people who hold $Z build all of it.
 
 ---
 
-## What's in this repo
+## What's in this repo right now
 
-Contributions are structured as **skills** — a small, self-contained, runnable unit an AI
-agent can call. One skill lives in one folder under `skills/`. Every skill ships with:
+The repo is at genesis. Before the `build.societyz.xyz` web app exists, the repo needed
+the mechanism that makes every future merge here real: a way to check that a contributor
+holds $Z, and a way to prove a wallet and a GitHub account belong to the same person.
+Both are built and tested:
 
-- a manifest (`skill.json`) — see [`SKILL_SPEC.md`](./SKILL_SPEC.md)
-- a `README.md`
-- an implementation (`index.mjs` or `main.py`)
-- a passing smoke test (`smoke.mjs`)
-- an author identity (a Crest agent passport — human or agent)
+- [`skills/gate`](./skills/gate/) — verifies a Solana wallet holds enough $Z and returns a
+  signed pass/fail verdict. The check every merge runs through.
+- [`linking/`](./linking/) — Sign-In-With-Solana wallet↔GitHub binding (ed25519,
+  domain-and-nonce bound, replay-proof).
+- [`maintainer/`](./maintainer/) — the real, tested merge bot: resolves a PR author's
+  linked wallet, checks the gate, runs review, and merges. Auto-merge is off in v1; a
+  human maintainer clicks merge.
+- [`skills/whois`](./skills/whois/) — the first worked example: a reputation card for any
+  address, assembled from Crest's onchain profile, Witnos, and AgentRank.
 
+Contributions here are structured as **skills** — a small, self-contained, runnable unit
+an AI agent can call. See [`SKILL_SPEC.md`](./SKILL_SPEC.md) for the manifest format.
 **One skill = one PR = one merge = one permanent, witnessed, attributed entry.**
 
-The repo bootstraps by building the parts it needs to run itself. The genesis skill is
-[`gate`](./skills/gate/) — the merge-gate that checks $Z holdings. The first worked example a
-new member copies is [`whois`](./skills/whois/) — a reputation card for any Base address. The
-real, tested mechanism that gates every merge lives in [`maintainer/`](./maintainer/) and
-[`linking/`](./linking/).
+## What gets built next: build.societyz.xyz
 
-## How it works
+The web app is not built yet. The plan, grounded in how real tools do this (v0, bolt.new,
+GitHub's own Copilot coding agent, Replit Agent, OpenHands):
+
+- **Bring your own key.** You paste your own Anthropic/OpenAI/OpenRouter key. It's stored
+  client-side. Society Z pays for none of your inference and never sees your key.
+- **Real attribution, not a bot.** A GitHub App using the "on-behalf-of-user" OAuth flow
+  opens the pull request as *you*, not as a service account.
+- **No in-browser sandbox in v1.** Server-side generation only: describe what you want,
+  review the diff, open the PR. Running/previewing the code live is a later problem.
+- **The same gate, unchanged.** Whether your PR comes from your own coding agent or from
+  build.societyz.xyz, the same holder-gate check and the same maintainer review apply.
+
+## How a contribution works today
 
 ```
 1. READ / FORK      anyone, no token           (it is a public repo)
 2. LINK             link your wallet <-> GitHub via Sign-In-With-Solana
                      (sign once, at link.societyz.xyz — available at launch)
-3. OPEN A PR         you or your agent, adding or changing ONE skill
-4. SMOKE TEST        CI runs your skill's smoke.mjs — must pass
+3. OPEN A PR         you, your own agent, or (once it ships) build.societyz.xyz
+4. SMOKE TEST        CI runs the change's smoke test — must pass
 5. HOLDER GATE       the `society-z/holder-gate` check reads your linked wallet's $Z
                      balance on-chain (Helius). Meets the threshold => green. This is a
                      REQUIRED status check, so GitHub itself blocks merge until it passes.
@@ -50,32 +73,33 @@ real, tested mechanism that gates every merge lives in [`maintainer/`](./maintai
                      attributed to your wallet. Permanent. Public. Yours.
 ```
 
-You never hand anyone a private key. The **only** signature the system ever asks for is you
-signing in with your own wallet to prove you control it. The gate is **read-only on-chain**.
+You never hand anyone a private key. The **only** signature the system ever asks for is
+you signing in with your own wallet to prove you control it. The gate is **read-only
+on-chain**.
 
 ## Why hold $Z to build this
 
 - **Your merges stay attributed to you, permanently.** They're hash-chained into the record
   and signed to your wallet, even if you later sell your $Z.
-- **You build the tools your own agent then runs.** Every merged skill is immediately callable
-  by every member. You're compounding a toolkit you use, not donating labor.
+- **You build the tools your own agent then runs** — and, once it ships, the web app
+  everyone without their own agent setup uses to get in.
 - **Standing is earned, not bought.** Holding $Z gets you in the door. Only shipping merged,
   *used* work builds Standing, and Standing decays if you stop contributing — see
   [`/standing`](https://societyz.xyz/standing) for why that's the point, not a bug.
-- **Usage-weighted.** Skills get called, so authors are weighted by real usage
-  (AgentRank / Witnos), not by how many they shipped. That's the anti-slop mechanism.
+- **Usage-weighted.** Contributions get called or run, so authors are weighted by real
+  usage (AgentRank / Witnos), not by how many they shipped. The anti-slop mechanism.
 
 ## Repo layout
 
 ```
-society-z/
+build/
   README.md              <- you are here
   CONTRIBUTING.md        <- how a human or agent contributes (start here to build)
   SKILL_SPEC.md          <- the minimal standard every skill folder follows
   skills/
     _template/           <- copy this to start a new skill
     gate/                <- GENESIS: the $Z merge-gate skill
-    whois/               <- WORKED EXAMPLE: reputation card for a Base address
+    whois/               <- WORKED EXAMPLE: reputation card for any address
   maintainer/            <- the real, tested merge bot (resolves wallet, checks $Z, reviews, merges)
   linking/               <- the real, tested Sign-In-With-Solana wallet<->GitHub binding
   .github/
@@ -86,14 +110,17 @@ society-z/
 ## Status
 
 This repo is at genesis. It is nearly empty — the commit history starts with the first
-builders — and it must become a live construction site before $Z mints, not stay an empty lot.
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) to add the next skill.
+builders — and it must become a live construction site before $Z mints, not stay an empty
+lot. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) to add the next thing, starting with
+build.societyz.xyz itself.
 
-Crest infrastructure is load-bearing: the **witness chain** anchors the record, the **agent
-passport** carries identity, **AgentRank / Witnos** weight usage. A generic token community
-would have to fake all three. We already run them.
+Crest infrastructure is load-bearing: the **witness chain** anchors the record, the
+**agent passport** carries identity, **AgentRank / Witnos** weight usage. A generic token
+community would have to fake all three. We already run them.
+
+More at [societyz.xyz](https://societyz.xyz) · [@therealsocietyz](https://x.com/therealsocietyz)
 
 ---
 
-*Not financial advice. $Z is an access credential for contribution rights, not an investment,
-and its price can go to zero.*
+*Not financial advice. $Z is an access credential for contribution rights, not an
+investment, and its price can go to zero.*
