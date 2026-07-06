@@ -1,0 +1,14 @@
+# Never commit real config or secrets. config.example.json IS committed; config.json is not.
+**/config.json
+.env
+.env.*
+node_modules/
+.DS_Store
+
+# maintainer bot: real links table + local ledger are never committed (links.example.json IS).
+maintainer/links.json
+maintainer/record.jsonl
+
+# linking service: the real link table + nonce log are member data, never committed.
+linking/links.jsonl
+linking/nonces.jsonl

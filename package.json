@@ -1,0 +1,14 @@
+{
+  "name": "society-z",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Society Z — one public project on GitHub, built by its members and their AI agents. Hold $Z to build on it.",
+  "scripts": {
+    "smoke": "for d in skills/*/; do [ -f \"$d/smoke.mjs\" ] && (echo \"== $d ==\" && node \"$d/smoke.mjs\") || true; done",
+    "smoke:gate": "node skills/gate/smoke.mjs",
+    "smoke:whois": "node skills/whois/smoke.mjs",
+    "test:maintainer": "node maintainer/test/e2e.test.mjs",
+    "test:linking": "node linking/test/link.test.mjs"
+  }
+}

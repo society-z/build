@@ -1,0 +1,17 @@
+{
+  "_comment": "STUB links table (github_id -> SIWS-proven wallet). Copy to links.json (gitignored) for local runs, OR replace links.mjs fileLinks() with supabaseLinks() at launch. In production this data lives in the SIWS-backed Supabase `links` table, never a committed file. Keys are numeric GitHub ids as strings.",
+
+  "4242": {
+    "github_login": "example-holder",
+    "wallet": "9UH61sREPLACEwithARealBase58Pubkey11111111LMA",
+    "passport_id": "psp_example_holder",
+    "principal_github_id": null,
+    "revoked": false
+  },
+  "7777": {
+    "github_login": "example-nonholder",
+    "wallet": "2BelowThresholdWalletPubkey1111111111111111111",
+    "passport_id": "psp_example_nonholder",
+    "revoked": false
+  }
+}

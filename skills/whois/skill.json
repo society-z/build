@@ -1,0 +1,32 @@
+{
+  "name": "whois",
+  "version": "0.1.0",
+  "description": "Return a one-screen reputation card for a Base address, assembled from Crest's live tools.",
+  "runtime": "node",
+  "entry": "index.mjs#run",
+  "inputs": {
+    "address": { "type": "string", "description": "Base (EVM) address, 0x-prefixed", "required": true }
+  },
+  "outputs": {
+    "address": { "type": "string" },
+    "profile": { "type": "object", "description": "onchain_profile snapshot (activity, age, balances)" },
+    "counterparty": { "type": "object", "description": "Witnos check_counterparty verdict (safe to pay?)" },
+    "agentrank": { "type": "object", "description": "AgentRank settlement-grounded score" },
+    "verdict": { "type": "string", "description": "one-line human summary" },
+    "assembled_at": { "type": "string", "description": "ISO8601" }
+  },
+  "example": {
+    "call": { "address": "0x1111111111111111111111111111111111111111" },
+    "result": {
+      "verdict": "active payer, low counterparty risk (AgentRank 0.82)",
+      "agentrank": { "score": 0.82 },
+      "counterparty": { "risk": "low" }
+    }
+  },
+  "smoke": "node smoke.mjs",
+  "author": { "passport_id": "psp_TODO", "github_id": 0, "wallet": "TODO" },
+  "config": {
+    "CREST_API_BASE": "https://api.crestsystems.ai (env CREST_API_BASE — verify canonical base at launch)"
+  },
+  "tags": ["base", "reputation", "crest", "witnos", "agentrank", "example"]
+}

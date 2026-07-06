@@ -1,0 +1,33 @@
+{
+  "name": "gate",
+  "version": "0.1.0",
+  "description": "Verify a Solana wallet holds >= threshold $Z and return a signed pass/fail verdict.",
+  "runtime": "node",
+  "entry": "index.mjs#run",
+  "inputs": {
+    "wallet": { "type": "string", "description": "base58 Solana pubkey to check", "required": true },
+    "pr": { "type": "string", "description": "optional PR ref this verdict is for, e.g. societyz/core#210", "required": false }
+  },
+  "outputs": {
+    "wallet": { "type": "string" },
+    "mint": { "type": "string", "description": "the $Z mint checked" },
+    "balance": { "type": "number", "description": "uiAmount of $Z held" },
+    "threshold": { "type": "number" },
+    "pass": { "type": "boolean" },
+    "reason": { "type": "string", "description": "human-readable pass/fail reason" },
+    "checked_at": { "type": "string", "description": "ISO8601" },
+    "signature": { "type": "string", "description": "ed25519 sig over the verdict by the gate key (empty if unsigned)" }
+  },
+  "example": {
+    "call": { "wallet": "9UH61sExamplePubkey...9LMA", "pr": "societyz/core#210" },
+    "result": { "pass": true, "balance": 41000, "threshold": 25000, "reason": "holds 41000 $Z (>= 25000)" }
+  },
+  "smoke": "node smoke.mjs",
+  "author": { "passport_id": "psp_TODO_maintainer", "github_id": 0, "wallet": "TODO" },
+  "config": {
+    "Z_MINT": "<Z_MINT_ADDRESS — Andy provides at launch>",
+    "Z_THRESHOLD": "<token amount for propose tier — Andy sets from dollar target>",
+    "HELIUS_RPC_URL": "<env HELIUS_RPC_URL at runtime — never committed>"
+  },
+  "tags": ["solana", "gate", "helius", "genesis"]
+}

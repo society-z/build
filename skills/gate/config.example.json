@@ -1,0 +1,12 @@
+{
+  "_comment": "Copy to config.json (gitignored) OR set as env vars. NEVER commit real values. The gate is read-only on-chain; the only secret is the RPC key and the gate's signing key.",
+
+  "Z_MINT": "REPLACE_WITH_Z_MINT_ADDRESS",
+  "Z_THRESHOLD": 25000,
+
+  "_env": {
+    "HELIUS_RPC_URL": "read from process.env.HELIUS_RPC_URL — includes your Helius API key, never commit",
+    "GATE_SIGNING_SECRET_KEY": "read from process.env.GATE_SIGNING_SECRET_KEY — base58 ed25519 secret of the gate's verdict key, never commit. If unset, verdicts are returned unsigned.",
+    "SECOND_RPC_URL": "optional read from process.env.SECOND_RPC_URL — a second provider for fail-closed agreement checks (see honest failure modes)"
+  }
+}

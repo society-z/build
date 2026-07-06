@@ -1,0 +1,63 @@
+# SPEC — NOT A DEPLOYED SECRET. This workflow file shows the SHAPE of the two required checks.
+# It references secrets by NAME only; no values live in the repo. Wire the real secrets in the
+# GitHub org/repo settings before enabling branch protection. See ./holder-gate/README.md.
+#
+# Two checks gate a PR:
+#   society-z/smoke        — runs the skill's smoke test (permissionless, proves the code works)
+#   society-z/holder-gate  — reads the PR author's linked wallet's $Z balance (the token gate)
+#
+# In production the holder-gate is better run by a GitHub APP (own identity, own token, can
+# re-run at the front of the merge queue). This Action form is the minimal stand-in / fallback.
+
+name: society-z gates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  merge_group: {}   # re-run at the front of the merge queue -> balance confirmed pre-merge
+
+permissions:
+  contents: read
+  statuses: write
+  pull-requests: write
+
+jobs:
+  smoke:
+    name: society-z/smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      # Run the smoke test for every skill folder that this PR touched.
+      - name: Run smoke tests for changed skills
+        run: |
+          for d in $(git diff --name-only origin/main... | grep '^skills/' | cut -d/ -f1-2 | sort -u); do
+            if [ -f "$d/smoke.mjs" ]; then
+              echo "== smoke: $d =="
+              node "$d/smoke.mjs" || exit 1
+            fi
+          done
+
+  holder-gate:
+    name: society-z/holder-gate
+    runs-on: ubuntu-latest
+    needs: smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      # Resolve PR author -> linked wallet -> $Z balance. FAIL CLOSED on any error.
+      # Secrets are referenced by name only; set them in repo/org settings.
+      - name: Verify $Z holding
+        env:
+          LINK_DB_URL: ${{ secrets.LINK_DB_URL }}              # Supabase links table (read)
+          LINK_DB_KEY: ${{ secrets.LINK_DB_SERVICE_KEY }}
+          HELIUS_RPC_URL: ${{ secrets.HELIUS_RPC_URL }}         # includes Helius API key
+          SECOND_RPC_URL: ${{ secrets.SECOND_RPC_URL }}         # optional agreement check
+          Z_MINT: ${{ secrets.Z_MINT }}                         # Andy provides at launch
+          Z_THRESHOLD: ${{ secrets.Z_THRESHOLD }}               # Andy sets from dollar target
+          PR_AUTHOR_ID: ${{ github.event.pull_request.user.id }}
+        run: node .github/holder-gate/check.mjs
+        # check.mjs: getLink(PR_AUTHOR_ID) -> skills/gate/index.mjs run({wallet}) ->
+        #            set commit status society-z/holder-gate + label + comment. See README.

@@ -1,0 +1,20 @@
+{
+  "name": "_template",
+  "version": "0.1.0",
+  "description": "One sentence: what an agent gets by calling this skill.",
+  "runtime": "node",
+  "entry": "index.mjs#run",
+  "inputs": {
+    "example_param": { "type": "string", "description": "describe it", "required": true }
+  },
+  "outputs": {
+    "result": { "type": "string", "description": "what comes back" }
+  },
+  "example": {
+    "call": { "example_param": "hello" },
+    "result": { "result": "HELLO" }
+  },
+  "smoke": "node smoke.mjs",
+  "author": { "passport_id": "psp_TODO", "github_id": 0, "wallet": "TODO" },
+  "tags": []
+}

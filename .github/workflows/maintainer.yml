@@ -1,0 +1,48 @@
+# Society Z maintainer bot — runs maintainer/action.mjs on every PR (and at the front of the
+# merge queue). Posts the required `society-z/holder-gate` status, runs the AI review pass, and
+# (only if AUTO_MERGE=1) merges + writes the witnessed record. In v1 AUTO_MERGE is OFF: the bot
+# marks eligible and a human maintainer clicks merge (approval is reputation-gated).
+#
+# SPEC/wiring: secrets are referenced by NAME only; set real values in repo/org settings. The bot
+# fails CLOSED — any missing secret, RPC error, or multi-RPC disagreement leaves the status red.
+#
+# NOTE: the v1 links lookup reads maintainer/links.json (gitignored). For a real deployment,
+# replace fileLinks() with supabaseLinks() in maintainer/links.mjs (reads the SIWS links table)
+# and drop LINKS_FILE. See maintainer/README.md.
+
+name: society-z maintainer
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  merge_group: {}   # re-run at the front of the merge queue -> balance confirmed pre-merge
+
+permissions:
+  contents: write        # merge (only when AUTO_MERGE=1)
+  statuses: write        # post society-z/holder-gate
+  pull-requests: write   # labels + comments
+
+jobs:
+  maintainer:
+    name: society-z/holder-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Run maintainer bot
+        env:
+          # GitHub identity. Prefer a GitHub App installation token; GITHUB_TOKEN is the fallback.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APP_INSTALLATION_TOKEN: ${{ secrets.APP_INSTALLATION_TOKEN }}
+          # Gate config + secrets (Andy provides Z_MINT / Z_THRESHOLD at launch):
+          Z_MINT: ${{ secrets.Z_MINT }}
+          Z_THRESHOLD: ${{ secrets.Z_THRESHOLD }}
+          HELIUS_RPC_URL: ${{ secrets.HELIUS_RPC_URL }}
+          SECOND_RPC_URL: ${{ secrets.SECOND_RPC_URL }}
+          GATE_SIGNING_SECRET_KEY: ${{ secrets.GATE_SIGNING_SECRET_KEY }}
+          # Optional:
+          REVIEW_MODEL: ${{ secrets.REVIEW_MODEL }}
+          LINK_URL: ${{ vars.LINK_URL }}
+          AUTO_MERGE: ${{ vars.AUTO_MERGE }}   # set to "1" only after v1 human-merge phase
+        run: node maintainer/action.mjs
