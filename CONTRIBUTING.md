@@ -75,16 +75,16 @@ Rules:
 Title: `skill: my-skill`. In the body, include your **passport id** (mint a free one via the
 Crest `crest_passport` tool) and one line on what the skill does.
 
-Two automated checks run:
+One automated check runs: **`society-z/holder-gate`**. It reflects your linked wallet's $Z
+balance on-chain — `>= threshold` => green — and is a **required status check** on `main`,
+re-run at the front of the merge queue so your balance is confirmed *seconds before* merge (you
+cannot flash-hold, get queued, then sell). If you are not linked, the bot comments with the link
+URL. PRs are never auto-closed.
 
-| Check | What it does |
-|---|---|
-| `society-z/smoke` | runs `node skills/my-skill/smoke.mjs`; must exit 0 |
-| `society-z/holder-gate` | reads your linked wallet's $Z balance on-chain; `>= threshold` => green |
-
-`holder-gate` is a **required status check** on `main` and re-runs at the front of the merge
-queue, so your balance is confirmed *seconds before* merge — you cannot flash-hold, get queued,
-then sell. If you are not linked, the bot comments with the link URL. PRs are never auto-closed.
+Separately, the bot also runs `node skills/my-skill/smoke.mjs` for every skill your PR touches
+as part of its review pass, and comments the result. In v1 a human maintainer reads that comment
+before merging — smoke failing does not itself flip the `holder-gate` status, so treat both the
+check and the review comment as required reading before you merge.
 
 ## Step 4 — Review and merge
 

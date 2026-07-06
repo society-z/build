@@ -63,10 +63,12 @@ GitHub's own Copilot coding agent, Replit Agent, OpenHands):
 2. LINK             link your wallet <-> GitHub via Sign-In-With-Solana
                      (sign once, at link.societyz.xyz — available at launch)
 3. OPEN A PR         you, your own agent, or (once it ships) build.societyz.xyz
-4. SMOKE TEST        CI runs the change's smoke test — must pass
-5. HOLDER GATE       the `society-z/holder-gate` check reads your linked wallet's $Z
+4. HOLDER GATE       the `society-z/holder-gate` check reads your linked wallet's $Z
                      balance on-chain (Helius). Meets the threshold => green. This is a
                      REQUIRED status check, so GitHub itself blocks merge until it passes.
+5. SMOKE + REVIEW    the bot separately runs your skill's smoke test as part of its review
+                     pass and comments the result. A human maintainer reads that comment
+                     before merging (it does not itself flip the holder-gate status).
 6. HUMAN MERGE       a maintainer reviews and clicks merge (v1 — no auto-merge)
 7. WRITTEN TO THE RECORD
                      on merge, the entry is hash-chained into Crest's witness chain and
@@ -103,8 +105,8 @@ build/
   maintainer/            <- the real, tested merge bot (resolves wallet, checks $Z, reviews, merges)
   linking/               <- the real, tested Sign-In-With-Solana wallet<->GitHub binding
   .github/
-    workflows/holder-gate.yml   <- CI wiring for the required status check (SPEC)
-    holder-gate/README.md       <- the GitHub App / Action spec + pseudocode
+    workflows/maintainer.yml   <- CI wiring that runs the real maintainer bot on every PR
+    holder-gate/README.md      <- the GitHub App vs Action design spec, links-table schema
 ```
 
 ## Status

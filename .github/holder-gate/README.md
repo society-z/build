@@ -11,14 +11,17 @@ and GitHub itself refuses the merge button until it is green. No custom merge co
 
 ## Ship it as a GitHub App (preferred), Action as fallback
 
-| | GitHub App (preferred) | GitHub Action (`holder-gate.yml`, fallback) |
+| | GitHub App (preferred, not yet built) | GitHub Action (`maintainer.yml`, live today) |
 |---|---|---|
 | Identity | own App identity + token | repo's `GITHUB_TOKEN` |
-| Commit status | posts `society-z/holder-gate` | posts via `statuses: write` |
+| Commit status | posts `society-z/holder-gate` | posts `society-z/holder-gate` via `statuses: write` |
 | Merge-queue re-run | re-evaluates at front of queue | `merge_group` trigger re-runs |
 | Trust anchor | yes — signs verdicts, owns link DB read | weaker, fine for cold-start |
 
-Both call the same core: `getLink(author) -> skills/gate run({wallet}) -> set status`.
+Both call the same core: `getLink(author) -> skills/gate run({wallet}) -> set status`. The
+Action-fallback column is the real, tested path today: `.github/workflows/maintainer.yml` runs
+`maintainer/action.mjs`, which wraps this exact logic (see `maintainer/README.md`). The
+pseudocode below shows the shape either implementation follows; it is not a separate live file.
 
 ## The whole bot (pseudocode)
 
