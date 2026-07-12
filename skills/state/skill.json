@@ -1,0 +1,30 @@
+{
+  "name": "state",
+  "version": "0.1.0",
+  "description": "Report the public state-of-the-society snapshot (skill count, authors, merge activity) from repo state alone, with no external service.",
+  "runtime": "node",
+  "entry": "index.mjs#run",
+  "inputs": {
+    "skillsDir": { "type": "string", "description": "path to the skills/ directory to walk; default: this repo's skills/", "required": false },
+    "skills": { "type": "array", "description": "already-loaded skill manifests ({name, version, description, author}), used instead of walking the filesystem", "required": false },
+    "recordPath": { "type": "string", "description": "path to a public record.jsonl; if present it is preferred over git for merge activity; default: maintainer/record.jsonl", "required": false },
+    "activity": { "type": "object", "description": "already-computed merge activity, used instead of reading the record or git", "required": false },
+    "root": { "type": "string", "description": "repo root override; default: two levels up from this skill", "required": false }
+  },
+  "outputs": {
+    "as_of": { "type": "string", "description": "ISO8601 timestamp of the snapshot" },
+    "skills": { "type": "object", "description": "{ count, member_authored, genesis_authored, list: [{name, version, description, author_member_id, author_github_id, author_kind}] }" },
+    "members": { "type": "object", "description": "{ count: null, derivable: false, note }; linked-member count is private member data and is never read here" },
+    "usage": { "type": "object", "description": "{ determinable: false, note }; call/usage counts are not recorded in the public repo" },
+    "activity": { "type": "object", "description": "{ source, merges, last_merge, last_commit, record_public, note } or null if no git history and no public record" },
+    "markdown": { "type": "string", "description": "a rendered markdown block suitable for pasting into a README or a post" },
+    "verdict": { "type": "string", "description": "one-line human summary" }
+  },
+  "example": {
+    "call": {},
+    "result": { "skills": { "count": 3, "member_authored": 0 }, "members": { "count": null, "derivable": false }, "verdict": "3 skills, 0 member-authored, 1 merge; linked-member count not publicly derivable" }
+  },
+  "smoke": "node smoke.mjs",
+  "author": { "member_id": "mem_maintainer", "github_id": 0, "wallet": "TODO" },
+  "tags": ["state", "snapshot", "genesis", "no-external-dependency"]
+}
