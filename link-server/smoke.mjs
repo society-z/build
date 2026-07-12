@@ -34,6 +34,7 @@ process.env.SOCIETY_Z_DOMAIN = "societyz.xyz";
 process.env.PUBLIC_BASE_URL = "https://link.societyz.xyz";
 process.env.LINK_DB_PATH = join(tmp, "links.jsonl");
 process.env.NONCE_DB_PATH = join(tmp, "nonces.jsonl");
+process.env.LINKS_EXPORT_SECRET = "smoke-test-export-secret";
 // secure cookies ON (default) so we can assert the Secure attribute; the raw client below does
 // not enforce Secure, it just echoes cookies back.
 
@@ -229,6 +230,25 @@ try {
   });
   assert(rejected.status === 400 && rejected.json?.code === "github-mismatch",
     "message bound to a non-session id is rejected (github-mismatch) — session id is authoritative");
+
+  // 7. /api/links-export: server-to-server feed for the maintainer bot's GitHub Action ---------
+  console.log("\n7. /api/links-export requires the shared secret and reflects real links");
+  const noSecret = await req(port, "GET", "/api/links-export");
+  assert(noSecret.status === 401, "no export secret header -> 401");
+  const exportReq = (headers) => new Promise((resolve, reject) => {
+    const r = httpRequest({ host: "127.0.0.1", port, method: "GET", path: "/api/links-export", headers }, (res) => {
+      let data = ""; res.on("data", (c) => (data += c));
+      res.on("end", () => resolve({ status: res.statusCode, json: JSON.parse(data || "null") }));
+    });
+    r.on("error", reject); r.end();
+  });
+  const wrong = await exportReq({ "x-export-secret": "nope" });
+  assert(wrong.status === 401, "wrong export secret -> 401");
+  const good = await exportReq({ "x-export-secret": "smoke-test-export-secret" });
+  assert(good.status === 200, "correct export secret -> 200");
+  assert(good.json?.["424242"]?.wallet === wallet.address, "export reflects the real link written in step 6, keyed by github_id");
+  assert(good.json?.["424242"]?.github_login === "testholder", "export carries github_login too");
+  assert(!("111111" in (good.json || {})), "the rejected decoy link never appears in the export");
 } finally {
   server.close();
 }

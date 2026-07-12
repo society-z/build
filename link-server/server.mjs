@@ -36,6 +36,10 @@ const CFG = {
   port: Number(process.env.PORT || 8787),
   // Cookie Secure flag. On (default) for prod/https. Set INSECURE_COOKIES=1 for local http dev.
   secureCookies: process.env.INSECURE_COOKIES ? false : true,
+  // Shared secret the maintainer bot's GitHub Action uses to pull the current links table at
+  // the start of each run, so a real OAuth+SIWS link is visible to the gate without anyone
+  // manually re-uploading a links.json secret. Required for /api/links-export to respond.
+  linksExportSecret: process.env.LINKS_EXPORT_SECRET || "",
 };
 
 const STATE_TTL_MS = 10 * 60 * 1000; // OAuth CSRF state lives 10 minutes
@@ -354,6 +358,32 @@ async function handle(req, res) {
     });
 
     return json(res, result.ok ? 200 : 400, result);
+  }
+
+  // GET /api/links-export — the maintainer bot's GitHub Action fetches this at the start of
+  // every run to resolve github_id -> wallet from the REAL SIWS-proven store, instead of a
+  // manually-maintained secret that silently drifts out of sync with actual links. Requires a
+  // shared secret (constant-time compared); this is server-to-server, never called by a browser.
+  if (method === "GET" && path === "/api/links-export") {
+    if (!CFG.linksExportSecret) return json(res, 500, { error: "export-not-configured" });
+    const given = req.headers["x-export-secret"] || "";
+    const givenBuf = Buffer.from(String(given));
+    const expectedBuf = Buffer.from(CFG.linksExportSecret);
+    const ok = givenBuf.length === expectedBuf.length && timingSafeEqual(givenBuf, expectedBuf);
+    if (!ok) return json(res, 401, { error: "bad-export-secret" });
+
+    // Shape matches exactly what maintainer/links.mjs's fileLinks() expects:
+    // { "<github_id>": { github_id, github_login, wallet, member_id?, revoked? } }
+    const table = {};
+    for (const [id, row] of linkStore.latestByGithubId()) {
+      table[String(id)] = {
+        github_id: id,
+        github_login: row.github_login || null,
+        wallet: row.wallet,
+        revoked: false, // latestByGithubId() already drops revoked rows
+      };
+    }
+    return json(res, 200, table);
   }
 
   res.writeHead(404, { "content-type": "text/plain" });
