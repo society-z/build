@@ -15,6 +15,15 @@ import { run as gateRun } from "../../skills/gate/index.mjs";
 let failed = false;
 const assert = (c, m) => { if (!c) { console.error("FAIL:", m); failed = true; } else { console.log("ok:", m); } };
 
+// The gate skill now reads Z_MINT/Z_THRESHOLD/HELIUS_RPC_URL from server-side config only
+// (config.json / process.env), never from caller-supplied inputs -- that was the fix for the
+// "caller can forge a pass" finding. So the test's stub values have to go through env, same as
+// skills/gate/smoke.mjs does. HELIUS_RPC_URL doesn't need to be reachable: stubHelius() below
+// replaces globalThis.fetch globally, so no real network call ever happens.
+process.env.Z_MINT = "TestMint1111111111111111111111111111111111";
+process.env.Z_THRESHOLD = "25000";
+process.env.HELIUS_RPC_URL = "https://stub.invalid/rpc";
+
 // Stub Helius: the gate's only network call is getTokenAccountsByOwner. Return a canned balance.
 function stubHelius(uiAmount) {
   globalThis.fetch = async () => ({
@@ -57,8 +66,8 @@ function prTouchingWhois(overrides = {}) {
 }
 
 const links = memoryLinks({
-  4242: { github_login: "example-holder", wallet: "HolderWallet111", member_id: "mem_holder" },
-  7777: { github_login: "example-nonholder", wallet: "PoorWallet111", member_id: "mem_poor" },
+  4242: { github_login: "example-holder", wallet: "HoLDERwaLLET11111111111111111111111111111111", member_id: "mem_holder" },
+  7777: { github_login: "example-nonholder", wallet: "PooRwaLLET1111111111111111111111111111111111", member_id: "mem_poor" },
   // 9999 intentionally absent -> no link
 });
 

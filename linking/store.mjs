@@ -88,9 +88,22 @@ export function createNonceStore({ path = DEFAULT_NONCES } = {}) {
     return state().get(nonce) === "issued";
   }
 
+  // In-process claim set: closes the check-then-append (TOCTOU) window so two concurrent
+  // requests in the SAME process cannot both observe "issued" and both mark it "used".
+  // consume() runs to completion synchronously (no await between the check and the claim),
+  // so within one Node process the claim + append is atomic.
+  // NOTE (multi-instance): this in-process guard does NOT cover multiple processes/instances
+  // sharing the same file. A multi-instance deployment must make the check-and-mark atomic in
+  // the durable backend, e.g. Postgres `UPDATE nonces SET state='used' WHERE nonce=$1 AND
+  // state='issued'` gated on the affected-row count, or Redis GETDEL/SETNX. Swap
+  // createNonceStore for that backend at launch.
+  const claimed = new Set();
+
   // Returns true exactly once for an issued, unused nonce; false on replay/unknown.
   function consume(nonce) {
-    if (state().get(nonce) !== "issued") return false;
+    if (claimed.has(nonce)) return false;              // already consumed in this process
+    if (state().get(nonce) !== "issued") return false; // never issued or already used (durable)
+    claimed.add(nonce);                                // claim BEFORE the append; atomic in-process
     appendFileSync(path, JSON.stringify({ nonce, state: "used", at: new Date().toISOString() }) + "\n");
     return true;
   }
@@ -108,9 +121,25 @@ export function memoryNonceStore(preIssued = []) {
   };
 }
 
-// A store whose consume() always succeeds — for AUDIT re-derivation, where nonce
-// single-use was already enforced at link time and we only re-check signatures.
-export const auditNonceStore = { consume: () => true, isIssued: () => true, issue: () => "" };
+// Audit nonce store: fresh per audit run, enforces single-use WITHIN that run. Nonce
+// single-use was enforced durably at link time; here we re-derive the table from stored
+// signatures, so the check we can still make is that no nonce appears twice — a duplicate or
+// replayed row reusing an already-seen nonce is rejected. First sighting of a nonce succeeds;
+// any repeat in the same audit fails. Create one per auditLinks() call so re-derivation stays
+// repeatable across runs. (A legitimate revoke must therefore be a separately-signed message
+// carrying its OWN fresh nonce, not a verbatim re-append of the original signed row.)
+export function createAuditNonceStore() {
+  const seen = new Set();
+  return {
+    consume(nonce) {
+      if (!nonce || seen.has(nonce)) return false;
+      seen.add(nonce);
+      return true;
+    },
+    isIssued: () => true,
+    issue: () => "",
+  };
+}
 
 import { randomBytes } from "node:crypto";
 export function randomNonce() {

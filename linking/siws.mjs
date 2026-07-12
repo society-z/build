@@ -87,9 +87,12 @@ export function verifyLink({
 
   const parsed = parseSiwsMessage(message);
 
-  // (3) domain must be ours — blocks cross-domain / phishing replay.
+  // (3) domain must be ours — blocks cross-domain / phishing replay. Fail closed if the server
+  // domain is not configured: an empty/unset expectedDomain must NOT silently disable domain
+  // binding (e.g. when SOCIETY_Z_DOMAIN is missing from the environment).
   if (!parsed.domain) return reject("bad-message", "no domain line");
-  if (expectedDomain && parsed.domain !== expectedDomain) {
+  if (!expectedDomain) return reject("no-expected-domain", "server expectedDomain not configured");
+  if (parsed.domain !== expectedDomain) {
     return reject("wrong-domain", `message domain ${parsed.domain} != ${expectedDomain}`);
   }
   if (parsed.chainId && parsed.chainId !== CHAIN_ID) {
@@ -106,12 +109,15 @@ export function verifyLink({
     return reject("github-mismatch", `message github_id ${parsed.github_id} != claimed ${github_id}`);
   }
 
-  // (5) expiry.
-  if (parsed.expirationTime) {
-    const exp = new Date(parsed.expirationTime);
-    if (!Number.isNaN(exp.getTime()) && now.getTime() > exp.getTime()) {
-      return reject("expired", `expired at ${parsed.expirationTime}`);
-    }
+  // (5) expiry — require a present, parseable Expiration Time and fail closed otherwise, so an
+  // attacker cannot omit or malform the field to obtain a signature that never expires.
+  if (!parsed.expirationTime) return reject("no-expiry", "message has no expiration time");
+  const exp = new Date(parsed.expirationTime);
+  if (Number.isNaN(exp.getTime())) {
+    return reject("bad-expiry", `unparseable expiration time ${parsed.expirationTime}`);
+  }
+  if (now.getTime() > exp.getTime()) {
+    return reject("expired", `expired at ${parsed.expirationTime}`);
   }
 
   // (1) the cryptographic core. Verify the ed25519 signature over the EXACT message bytes.
