@@ -1,0 +1,36 @@
+{
+  "name": "request-build",
+  "version": "0.1.0",
+  "description": "Given a wallet, a GitHub login, and an idea in words, verify the wallet holds >= threshold $Z and return the exact OpenHands-triggering issue that WOULD be created (dry-run; it never creates it).",
+  "runtime": "node",
+  "entry": "index.mjs#run",
+  "inputs": {
+    "wallet": { "type": "string", "description": "base58 Solana pubkey of the requester; its $Z balance is checked on-chain", "required": true },
+    "github_login": { "type": "string", "description": "GitHub username to credit as the requester in the issue body", "required": true },
+    "idea": { "type": "string", "description": "the build request in plain words; its first line becomes the issue title", "required": true }
+  },
+  "outputs": {
+    "authorized": { "type": "boolean", "description": "true only if the wallet holds >= threshold $Z" },
+    "reason": { "type": "string", "description": "human-readable authorized/denied reason" },
+    "wallet": { "type": "string" },
+    "github_login": { "type": "string" },
+    "balance": { "type": "number", "description": "uiAmount of $Z held (from the gate skill)" },
+    "threshold": { "type": "number" },
+    "gate": { "type": "object", "description": "the full (optionally signed) holder verdict from skills/gate for auditability" },
+    "would_create": { "type": "object", "description": "the exact { title, body, labels:[fix-me] } issue a write-capable step would create; null when unauthorized" },
+    "dry_run": { "type": "boolean", "description": "always true — this skill never creates issues or applies labels" },
+    "checked_at": { "type": "string", "description": "ISO8601" }
+  },
+  "example": {
+    "call": { "wallet": "9UH61sExamplePubkey...9LMA", "github_login": "octocat", "idea": "Add a dark mode toggle to the roster page" },
+    "result": { "authorized": true, "dry_run": true, "would_create": { "title": "[build] Add a dark mode toggle to the roster page", "labels": ["fix-me"] } }
+  },
+  "smoke": "node smoke.mjs",
+  "author": { "member_id": "mem_TODO_maintainer", "github_id": 0, "wallet": "TODO" },
+  "config": {
+    "Z_MINT": "<Z_MINT_ADDRESS — Andy provides at launch; same value the gate uses>",
+    "Z_THRESHOLD": "<token amount for the build tier — Andy sets from a dollar target>",
+    "HELIUS_RPC_URL": "<env HELIUS_RPC_URL at runtime — never committed>"
+  },
+  "tags": ["solana", "gate", "openhands", "build", "dry-run"]
+}
