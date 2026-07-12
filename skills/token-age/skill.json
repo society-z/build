@@ -1,0 +1,45 @@
+{
+  "name": "token-age",
+  "version": "0.1.0",
+  "description": "Given a Solana mint address, report the token's on-chain age plus live mint and freeze authority status.",
+  "runtime": "node",
+  "entry": "index.mjs#run",
+  "inputs": {
+    "mint": { "type": "string", "description": "base58 Solana mint address to inspect", "required": true },
+    "config": { "type": "object", "description": "optional { HELIUS_RPC_URL } override; defaults to env then public mainnet", "required": false }
+  },
+  "outputs": {
+    "mint": { "type": "string" },
+    "program": { "type": "string", "description": "token or token-2022, from the mint account owner" },
+    "oldest_signature": { "type": "string", "description": "the oldest signature for the mint address, or null" },
+    "created_at": { "type": "string", "description": "ISO8601 block time of the oldest signature, or null" },
+    "created_slot": { "type": "number", "description": "slot of the oldest signature, or null" },
+    "age_seconds": { "type": "number", "description": "seconds since creation, or null" },
+    "age": { "type": "string", "description": "compact human age, e.g. 3d 4h, or null" },
+    "mint_authority": { "type": "string", "description": "base58 mint authority, or null if revoked" },
+    "freeze_authority": { "type": "string", "description": "base58 freeze authority, or null if revoked" },
+    "mint_authority_revoked": { "type": "boolean" },
+    "freeze_authority_revoked": { "type": "boolean" },
+    "signatures_scanned": { "type": "number", "description": "how many signatures were paged through to find the oldest" },
+    "caveats": { "type": "array", "description": "honest notes: no blockTime, no signatures, or a truncated scan" },
+    "reason": { "type": "string", "description": "one-line human summary" },
+    "checked_at": { "type": "string", "description": "ISO8601" }
+  },
+  "example": {
+    "call": { "mint": "4ss9wz5gaieaizHYkrNMQQnXKW19wWrJGLP2QxhUpump" },
+    "result": {
+      "program": "token-2022",
+      "mint_authority": null,
+      "freeze_authority": null,
+      "mint_authority_revoked": true,
+      "freeze_authority_revoked": true,
+      "reason": "created 2026-07-12T...; mint authority revoked; freeze authority revoked; token-2022 program"
+    }
+  },
+  "smoke": "node smoke.mjs",
+  "author": { "member_id": "mem_TODO_maintainer", "github_id": 0, "wallet": "TODO" },
+  "config": {
+    "HELIUS_RPC_URL": "<env HELIUS_RPC_URL at runtime — never committed; falls back to https://api.mainnet-beta.solana.com>"
+  },
+  "tags": ["solana", "token", "helius", "honesty-check", "read-only"]
+}
