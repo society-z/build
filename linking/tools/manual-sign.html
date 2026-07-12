@@ -1,0 +1,290 @@
+<!doctype html>
+<!--
+  manual-sign.html — GENESIS CONVENIENCE TOOL for Society Z wallet linking. LOCAL ONLY, not a
+  production service. Open it directly in a browser (file://) with Solflare (or any Wallet
+  Standard wallet, e.g. Phantom) installed. It builds the exact SIWS message from linking/siws.mjs
+  (buildSiwsMessage), signs it in your wallet, and prints the links.jsonl row. No secrets, no
+  server, no network calls at all beyond the wallet extension itself. Verify the message text
+  before you sign; sign nowhere but for societyz.xyz.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Society Z — manual wallet link (SIWS)</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: #111; background: #fff; margin: 0; padding: 2rem 1.25rem 4rem;
+  }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 1.25rem; margin: 0 0 .25rem; letter-spacing: .01em; }
+  p.sub { color: #555; margin: 0 0 1.5rem; }
+  .note { border: 1px solid #000; padding: .75rem 1rem; margin: 0 0 1.5rem; background: #fafafa; }
+  .note b { display: block; margin-bottom: .25rem; }
+  fieldset { border: 1px solid #ccc; padding: 1rem; margin: 0 0 1.25rem; }
+  legend { padding: 0 .4rem; font-weight: 700; }
+  label { display: block; margin: .6rem 0 .2rem; color: #333; }
+  input, textarea {
+    width: 100%; font: inherit; padding: .45rem .55rem; border: 1px solid #999; background: #fff;
+    color: #111;
+  }
+  textarea { min-height: 220px; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+  .row { display: flex; gap: .75rem; flex-wrap: wrap; }
+  .row > div { flex: 1 1 220px; }
+  button {
+    font: inherit; padding: .55rem 1rem; border: 1px solid #000; background: #000; color: #fff;
+    cursor: pointer; margin: .25rem .5rem .25rem 0;
+  }
+  button.secondary { background: #fff; color: #000; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .out { border: 1px solid #000; padding: .75rem 1rem; margin: .75rem 0 0; word-break: break-all; }
+  .out b { display: block; margin-bottom: .3rem; }
+  .status { margin: .5rem 0; color: #333; min-height: 1.2em; }
+  .err { color: #a00; }
+  code { background: #f0f0f0; padding: 0 .2em; }
+  a { color: #000; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Society Z — manual wallet link</h1>
+  <p class="sub">Sign one message to bind your Solana wallet to your GitHub id. Local tool, genesis path.</p>
+
+  <div class="note">
+    <b>Read before you sign.</b>
+    This page runs entirely on your machine and makes no network calls except to your wallet
+    extension. We only ever ask you to sign for <code>societyz.xyz</code>. Any other site asking
+    you to "sign for Society Z" is phishing. Signing a message is not a transaction: it costs
+    nothing and moves no funds. Confirm the message text below matches before you approve it in
+    the wallet.
+  </div>
+
+  <fieldset>
+    <legend>1. Fields</legend>
+    <div class="row">
+      <div>
+        <label for="domain">Domain</label>
+        <input id="domain" value="societyz.xyz" />
+      </div>
+      <div>
+        <label for="uri">URI</label>
+        <input id="uri" value="https://societyz.xyz" />
+      </div>
+    </div>
+    <label for="wallet">Wallet pubkey (auto-filled on connect; editable)</label>
+    <input id="wallet" placeholder="connect a wallet, or paste your base58 pubkey" />
+    <div class="row">
+      <div>
+        <label for="login">GitHub login</label>
+        <input id="login" value="andysalvo" />
+      </div>
+      <div>
+        <label for="gid">GitHub numeric id</label>
+        <input id="gid" value="262953846" />
+      </div>
+    </div>
+    <label for="nonce">Nonce (single-use; regenerate for each attempt)</label>
+    <div class="row">
+      <div style="flex:1 1 100%"><input id="nonce" /></div>
+    </div>
+    <button class="secondary" id="regen">Regenerate nonce + times</button>
+    <div class="row">
+      <div>
+        <label for="issued">Issued At (ISO8601)</label>
+        <input id="issued" />
+      </div>
+      <div>
+        <label for="exp">Expiration Time (ISO8601, +10 min)</label>
+        <input id="exp" />
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>2. Message to sign (byte-for-byte)</legend>
+    <p class="sub">Rebuilt from the fields above. This exact text is what gets signed and stored.
+      You may edit it directly if a maintainer asks for a specific variant; the signature is over
+      whatever is in this box.</p>
+    <textarea id="message" spellcheck="false"></textarea>
+    <button class="secondary" id="rebuild">Rebuild from fields</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>3. Connect + sign</legend>
+    <button id="connect">Connect wallet</button>
+    <button id="sign" disabled>Sign message</button>
+    <div class="status" id="status"></div>
+
+    <div class="out" id="sigBox" style="display:none">
+      <b>base58 signature</b>
+      <div id="sigOut"></div>
+    </div>
+
+    <div class="out" id="jsonBox" style="display:none">
+      <b>links.jsonl row (copy this into your link PR)</b>
+      <div id="jsonOut"></div>
+      <button class="secondary" id="copyJson" style="margin-top:.6rem">Copy JSON</button>
+    </div>
+  </fieldset>
+</main>
+
+<script>
+// ---------- base58 (Bitcoin alphabet), zero-dependency ----------
+const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function base58Encode(bytes) {
+  if (bytes.length === 0) return "";
+  const digits = [0];
+  for (let i = 0; i < bytes.length; i++) {
+    let carry = bytes[i];
+    for (let j = 0; j < digits.length; j++) {
+      carry += digits[j] << 8;
+      digits[j] = carry % 58;
+      carry = (carry / 58) | 0;
+    }
+    while (carry > 0) { digits.push(carry % 58); carry = (carry / 58) | 0; }
+  }
+  let out = "";
+  for (let i = 0; bytes[i] === 0 && i < bytes.length - 1; i++) out += "1"; // leading-zero pad
+  for (let i = digits.length - 1; i >= 0; i--) out += B58[digits[i]];
+  return out;
+}
+
+// ---------- helpers ----------
+const $ = (id) => document.getElementById(id);
+const nowIso = () => new Date().toISOString();
+const plus10 = (d) => new Date(d.getTime() + 10 * 60000).toISOString();
+function uuid() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  return [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+function setStatus(msg, isErr) {
+  const el = $("status"); el.textContent = msg; el.className = "status" + (isErr ? " err" : "");
+}
+
+// Exact replica of linking/siws.mjs buildSiwsMessage (Version: 1 included — the code's source of
+// truth, and what the hosted link page will emit). Edit the textarea directly if a maintainer
+// wants the Version line dropped; the signature is over whatever the textarea holds.
+function buildMessage() {
+  const domain = $("domain").value.trim();
+  const wallet = $("wallet").value.trim();
+  const login = $("login").value.trim();
+  const gid = $("gid").value.trim();
+  const uri = $("uri").value.trim();
+  const nonce = $("nonce").value.trim();
+  const issued = $("issued").value.trim();
+  const exp = $("exp").value.trim();
+  return [
+    `${domain} wants you to sign in with your Solana account:`,
+    `${wallet}`,
+    ``,
+    `Link this wallet to GitHub @${login} (id ${gid}) for Society Z contribution.`,
+    ``,
+    `URI: ${uri}`,
+    `Version: 1`,
+    `Chain ID: solana:mainnet`,
+    `Nonce: ${nonce}`,
+    `Issued At: ${issued}`,
+    `Expiration Time: ${exp}`,
+  ].join("\n");
+}
+function rebuild() { $("message").value = buildMessage(); }
+
+function refreshNonceTimes() {
+  const now = new Date();
+  $("nonce").value = uuid();
+  $("issued").value = now.toISOString();
+  $("exp").value = plus10(now);
+  rebuild();
+}
+
+// ---------- wallet ----------
+function getProvider() {
+  // Prefer Solflare's injected provider; fall back to Phantom (window.solana) or the first
+  // Wallet Standard wallet that can sign a message. All expose connect() + signMessage().
+  if (window.solflare) return { p: window.solflare, name: "Solflare" };
+  if (window.solana && window.solana.isPhantom) return { p: window.solana, name: "Phantom" };
+  if (window.solana) return { p: window.solana, name: "wallet" };
+  return null;
+}
+
+let connected = null; // { p, name }
+
+async function connect() {
+  const found = getProvider();
+  if (!found) {
+    setStatus("No injected Solana wallet found. Install Solflare (or Phantom) and reopen this file.", true);
+    return;
+  }
+  try {
+    setStatus(`Connecting to ${found.name}…`);
+    const res = await found.p.connect();
+    // publicKey may live on the provider or on the connect() result depending on the wallet.
+    const pk = (found.p.publicKey || (res && res.publicKey));
+    const addr = pk && (pk.toString ? pk.toString() : String(pk));
+    if (!addr) throw new Error("wallet returned no public key");
+    $("wallet").value = addr;
+    connected = found;
+    rebuild();
+    $("sign").disabled = false;
+    setStatus(`Connected: ${found.name} — ${addr}`);
+  } catch (e) {
+    setStatus("Connect failed: " + (e && e.message ? e.message : e), true);
+  }
+}
+
+async function signMessage() {
+  if (!connected) { setStatus("Connect a wallet first.", true); return; }
+  const text = $("message").value;
+  const bytes = new TextEncoder().encode(text);
+  try {
+    setStatus("Requesting signature in wallet…");
+    const res = await connected.p.signMessage(bytes, "utf8");
+    // Normalize the many return shapes: Uint8Array, { signature }, or base58 string.
+    let sig = res && res.signature ? res.signature : res;
+    let sigB58;
+    if (typeof sig === "string") {
+      sigB58 = sig; // already base58 (some wallets return a string)
+    } else {
+      sigB58 = base58Encode(sig instanceof Uint8Array ? sig : new Uint8Array(sig));
+    }
+    $("sigOut").textContent = sigB58;
+    $("sigBox").style.display = "block";
+
+    const row = {
+      github_id: Number($("gid").value.trim()),
+      github_login: $("login").value.trim(),
+      wallet: $("wallet").value.trim(),
+      siws_message: text,
+      siws_signature: sigB58,
+      linked_at: nowIso(),
+    };
+    $("jsonOut").textContent = JSON.stringify(row);
+    $("jsonBox").style.display = "block";
+    setStatus("Signed. Copy the JSON row below into your link PR (one line in linking/links.jsonl).");
+  } catch (e) {
+    setStatus("Signing failed or was rejected: " + (e && e.message ? e.message : e), true);
+  }
+}
+
+// ---------- wiring ----------
+$("connect").addEventListener("click", connect);
+$("sign").addEventListener("click", signMessage);
+$("regen").addEventListener("click", refreshNonceTimes);
+$("rebuild").addEventListener("click", rebuild);
+$("copyJson").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("jsonOut").textContent); setStatus("JSON copied."); }
+  catch { setStatus("Copy failed — select the text and copy manually.", true); }
+});
+for (const id of ["domain", "uri", "wallet", "login", "gid", "nonce", "issued", "exp"]) {
+  $(id).addEventListener("input", rebuild);
+}
+
+// Initial fill.
+refreshNonceTimes();
+</script>
+</body>
+</html>

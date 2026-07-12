@@ -1,0 +1,25 @@
+{
+  "name": "roster",
+  "version": "0.1.0",
+  "description": "Read the SIWS-proven links table and report Society Z's current member list, with no external service.",
+  "runtime": "node",
+  "entry": "index.mjs#run",
+  "inputs": {
+    "path": { "type": "string", "description": "path to a links.json file (same shape as maintainer/links.example.json); default: links.json in cwd", "required": false },
+    "links": { "type": "array", "description": "an already-loaded links table (array of rows OR a { <github_id>: row } map), used instead of reading a file", "required": false }
+  },
+  "outputs": {
+    "count": { "type": "number", "description": "number of active members" },
+    "members": { "type": "array", "description": "one object per active member: { member_id, github_id, github_login, wallet, wallet_short, kind, principal_github_id, tier }" },
+    "dropped": { "type": "number", "description": "rows present in the table but revoked or unusable, excluded fail-closed" },
+    "reason": { "type": "string", "description": "one-line human summary" },
+    "as_of": { "type": "string", "description": "ISO8601" }
+  },
+  "example": {
+    "call": { "path": "../../maintainer/links.json" },
+    "result": { "count": 0, "members": [], "dropped": 0, "reason": "0 members — Society Z is at genesis" }
+  },
+  "smoke": "node smoke.mjs",
+  "author": { "member_id": "mem_maintainer", "github_id": 0, "wallet": "TODO" },
+  "tags": ["roster", "members", "links", "genesis", "no-external-dependency"]
+}
