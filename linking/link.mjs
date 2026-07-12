@@ -14,7 +14,7 @@ import { buildSiwsMessage, verifyLink } from "./siws.mjs";
 import {
   createLinkStore,
   createNonceStore,
-  auditNonceStore,
+  createAuditNonceStore,
 } from "./store.mjs";
 
 const DOMAIN = process.env.SOCIETY_Z_DOMAIN || "societyz.xyz";
@@ -101,6 +101,7 @@ export function auditLinks({ linkStore = defaultLinks, domain = DOMAIN } = {}) {
   const valid = [];
   const invalid = [];
   const table = new Map(); // github_id -> wallet (latest valid wins)
+  const auditNonces = createAuditNonceStore(); // fresh per run; rejects duplicate/replayed nonces
   for (const r of rows) {
     const v = verifyLink({
       github_id: r.github_id,
@@ -108,13 +109,19 @@ export function auditLinks({ linkStore = defaultLinks, domain = DOMAIN } = {}) {
       message: r.siws_message,
       signature: r.siws_signature,
       expectedDomain: domain,
-      nonceStore: auditNonceStore, // nonce single-use was enforced at link time
+      nonceStore: auditNonces,
     });
     if (v.ok && !r.revoked) {
       valid.push(r);
       table.set(Number(r.github_id), r.wallet);
+    } else if (v.ok && r.revoked) {
+      // A signature-valid revoke removes the active mapping, matching store.latestByGithubId()
+      // (store.mjs), which drops a github_id whose latest row is revoked. Applying set/delete in
+      // file order reproduces latest-wins + revoke, so the audit table and the store agree.
+      table.delete(Number(r.github_id));
+      invalid.push({ github_id: r.github_id, wallet: r.wallet, code: "revoked" });
     } else {
-      invalid.push({ github_id: r.github_id, wallet: r.wallet, code: r.revoked ? "revoked" : v.code });
+      invalid.push({ github_id: r.github_id, wallet: r.wallet, code: v.code });
     }
   }
   return { table, valid, invalid };

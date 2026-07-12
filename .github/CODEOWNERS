@@ -1,0 +1,12 @@
+# Protected paths require review from a project maintainer before merge,
+# regardless of what the automated holder-gate/review bot decides. This is
+# platform-enforced (GitHub branch protection "require review from Code
+# Owners"), independent of and redundant with the protected-path check in
+# maintainer/review.mjs -- a bug in that check does not remove this layer.
+
+/maintainer/       @andysalvo @jamesonackerman
+/skills/gate/       @andysalvo @jamesonackerman
+/.github/           @andysalvo @jamesonackerman
+/links*.json        @andysalvo @jamesonackerman
+/linking/store.mjs  @andysalvo @jamesonackerman
+/linking/siws.mjs   @andysalvo @jamesonackerman

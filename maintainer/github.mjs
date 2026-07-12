@@ -50,7 +50,21 @@ export function realGithub({ token, repo, fetchImpl = fetch }) {
       return gh(`/issues/${number}/labels`, { method: "POST", body: { labels } });
     },
     async getDiff({ number }) {
-      const files = await gh(`/pulls/${number}/files?per_page=100`);
+      // Paginate the full PR file list. A single page (per_page=100) silently truncates large PRs,
+      // which would hide protected-path / extra-skill edits from review. Fail CLOSED past a sane
+      // cap: a PR with thousands of files is either abuse or a DoS, never a legitimate one-skill PR.
+      const PER_PAGE = 100;
+      const MAX_FILES = 3000; // ~30 pages; far beyond any legitimate skill PR.
+      const files = [];
+      for (let page = 1; ; page++) {
+        const batch = await gh(`/pulls/${number}/files?per_page=${PER_PAGE}&page=${page}`);
+        if (!Array.isArray(batch) || batch.length === 0) break;
+        files.push(...batch);
+        if (files.length > MAX_FILES) {
+          throw new Error(`PR #${number} exceeds ${MAX_FILES} changed files (${files.length}+); refusing to review (fail closed)`);
+        }
+        if (batch.length < PER_PAGE) break; // last page
+      }
       return { files: files.map((f) => ({ filename: f.filename, additions: f.additions, deletions: f.deletions })) };
     },
     async merge({ number, sha }) {
