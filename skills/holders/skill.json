@@ -1,0 +1,35 @@
+{
+  "name": "holders",
+  "version": "0.1.0",
+  "description": "Given a Solana SPL mint, report a holder concentration snapshot: total supply, the largest token accounts (top 20 max), and top-N concentration percent.",
+  "runtime": "node",
+  "entry": "index.mjs#run",
+  "inputs": {
+    "mint": { "type": "string", "description": "base58 SPL mint address to snapshot", "required": true },
+    "top": { "type": "number", "description": "N for the headline concentration figure; default 10, clamped to [1,20] since getTokenLargestAccounts returns at most 20", "required": false },
+    "config": { "type": "object", "description": "optional overrides, e.g. { HELIUS_RPC_URL }; otherwise env then public mainnet fallback", "required": false }
+  },
+  "outputs": {
+    "mint": { "type": "string" },
+    "decimals": { "type": "number" },
+    "total_supply": { "type": "number", "description": "uiAmount of total supply from getTokenSupply" },
+    "accounts_returned": { "type": "number", "description": "how many largest token accounts came back (0 to 20)" },
+    "top_n": { "type": "number", "description": "N actually used for the headline figure (min of requested top and accounts_returned)" },
+    "top_n_concentration_pct": { "type": "number", "description": "percent of total supply held by the top N largest token accounts; null if supply is zero" },
+    "top_20_concentration_pct": { "type": "number", "description": "percent held by all returned accounts (the largest-20 view); null if supply is zero" },
+    "top": { "type": "array", "description": "rows [{ rank, address, amount, pct_of_supply }]; address is the TOKEN ACCOUNT, not the owner wallet" },
+    "caveat": { "type": "string", "description": "states the top-20 limit and that rows are token accounts, not owners, and not a holder count" },
+    "checked_at": { "type": "string", "description": "ISO8601" },
+    "verdict": { "type": "string", "description": "one-line human summary" }
+  },
+  "example": {
+    "call": { "mint": "4ss9wz5gaieaizHYkrNMQQnXKW19wWrJGLP2QxhUpump", "top": 10 },
+    "result": { "total_supply": 1000000000, "accounts_returned": 20, "top_n": 10, "top_n_concentration_pct": 34.2, "top_20_concentration_pct": 41.7 }
+  },
+  "smoke": "node smoke.mjs",
+  "author": { "member_id": "mem_TODO_maintainer", "github_id": 0, "wallet": "TODO" },
+  "config": {
+    "HELIUS_RPC_URL": "<env HELIUS_RPC_URL at runtime, never committed; falls back to https://api.mainnet-beta.solana.com when unset>"
+  },
+  "tags": ["solana", "holders", "concentration", "transparency", "helius", "no-key-required"]
+}
