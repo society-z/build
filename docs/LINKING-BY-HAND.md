@@ -40,6 +40,7 @@ societyz.xyz wants you to sign in with your Solana account:
 Link this wallet to GitHub @<YOUR_LOGIN> (id <YOUR_NUMERIC_GITHUB_ID>) for Society Z contribution.
 
 URI: https://societyz.xyz
+Version: 1
 Chain ID: solana:mainnet
 Nonce: <NONCE_FROM_MAINTAINER>
 Issued At: <ISO8601_NOW>
