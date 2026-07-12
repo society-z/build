@@ -1,0 +1,32 @@
+{
+  "name": "record",
+  "version": "0.1.0",
+  "description": "Render a member's real merge history from this repo's own history: for each merged skill, the commit SHA, date, skill name, and one-line description.",
+  "runtime": "node",
+  "entry": "index.mjs#run",
+  "inputs": {
+    "filter": { "type": "string", "description": "case-insensitive substring; matches a commit author name/email (git mode) or a github_login/member_id/wallet (record mode). Omit to list every merge.", "required": false },
+    "github_login": { "type": "string", "description": "real attribution only in record mode; in git mode git has no login, so this is declined honestly via a caveat", "required": false },
+    "wallet": { "type": "string", "description": "real attribution only in record mode; git history carries no wallet, so this is declined honestly in git mode", "required": false },
+    "path": { "type": "string", "description": "path to a canonical record.jsonl; default: maintainer/record.jsonl (absent at genesis, so git history is used)", "required": false },
+    "entries": { "type": "array", "description": "already-loaded canonical record entries, used instead of reading a file (record mode)", "required": false },
+    "commits": { "type": "array", "description": "already-loaded git commit objects, used instead of shelling out to git (git mode; for tests)", "required": false },
+    "repoRoot": { "type": "string", "description": "repo root override; default is two levels up from this skill", "required": false }
+  },
+  "outputs": {
+    "source": { "type": "string", "description": "\"record\" (canonical hash-chained record) or \"git\" (honest interim source read from git history)" },
+    "count": { "type": "number", "description": "number of merges after filtering" },
+    "merges": { "type": "array", "description": "newest-first; each: { source, sha, sha_short, date, skills:[{name,description}], subject, author_name, author_email, github_login, member_id, wallet, wallet_short, pr, held_z_at_merge } — fields null when the source cannot honestly provide them" },
+    "filter": { "type": "string", "description": "the filter actually applied, or null" },
+    "caveats": { "type": "array", "description": "honest notes about what this source can and cannot attribute" },
+    "reason": { "type": "string", "description": "one-line human summary" },
+    "as_of": { "type": "string", "description": "ISO8601" }
+  },
+  "example": {
+    "call": { "filter": "salvo" },
+    "result": { "source": "git", "count": 4, "filter": "salvo", "reason": "4 merges matching \"salvo\" (from git history, interim)" }
+  },
+  "smoke": "node smoke.mjs",
+  "author": { "member_id": "mem_maintainer", "github_id": 0, "wallet": "TODO" },
+  "tags": ["record", "history", "attribution", "git", "genesis", "no-external-dependency"]
+}
