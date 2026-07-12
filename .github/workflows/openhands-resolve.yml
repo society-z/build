@@ -1,0 +1,81 @@
+# OpenHands resolver — turns a labeled issue into an opened PR, automatically.
+#
+# ┌── INERT BY DESIGN ─────────────────────────────────────────────────────────────────────┐
+# │ This workflow does NOTHING until `LLM_API_KEY` is set as a real repository secret.       │
+# │ Setting that key is a DELIBERATE, SEPARATE decision — it is NOT made by the commit that  │
+# │ adds this file. Until then every run no-ops (the reusable job has no key to spend), which │
+# │ is the safe default. Turning it live means someone chose to expose a paid LLM key to      │
+# │ this trigger, with full knowledge of the cost.                                            │
+# └────────────────────────────────────────────────────────────────────────────────────────┘
+#
+# ┌── WHY THERE IS A GATE IN FRONT OF THIS ────────────────────────────────────────────────┐
+# │ The OpenHands resolver has NO built-in abuse or cost protection. Every trigger burns the │
+# │ repo owner's paid LLM_API_KEY. On a PUBLIC repo, anyone who can comment `@openhands-agent`│
+# │ or apply the `fix-me` label could fire it with zero authorization. So this workflow is    │
+# │ NOT the public entry point. The public entry point is `skills/request-build/`, a thin     │
+# │ holder-check that only lets a wallet holding >= threshold $Z produce the issue + label    │
+# │ that reaches this resolver. Do not hand out `fix-me`-label or `@openhands-agent` rights on │
+# │ this repo to unauthenticated users. Gate first, resolve second.                           │
+# └────────────────────────────────────────────────────────────────────────────────────────┘
+#
+# ┌── VERIFY BEFORE ENABLING ──────────────────────────────────────────────────────────────┐
+# │ VERIFY against current OpenHands docs before enabling — their exact reference workflow    │
+# │ path has moved before. As of this writing OpenHands' `main` has restructured the resolver │
+# │ under `openhands/app_server/integrations/`, so the reusable-workflow reference below       │
+# │ (`OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@<tag>`) MUST be re-checked  │
+# │ against https://docs.openhands.dev/openhands/usage/run-openhands/github-action and pinned  │
+# │ to a real, current tag/SHA before this is ever turned live. This file encodes the standard │
+# │ documented pattern; treat the `uses:` line and input names as a template to confirm.       │
+# └────────────────────────────────────────────────────────────────────────────────────────┘
+
+name: openhands-resolve
+
+on:
+  # Label trigger: applying the `fix-me` label to an issue or PR hands it to OpenHands.
+  # In this repo, that label is meant to be applied ONLY by the gated request-build path,
+  # never by unauthenticated public users. See the gate note above.
+  issues:
+    types: [labeled]
+  pull_request:
+    types: [labeled]
+  # Comment trigger: `@openhands-agent ...` on an issue or PR.
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+# The resolver needs to write a branch, open the PR, and comment back on the issue.
+permissions:
+  contents: write        # create the branch + commit the generated diff
+  issues: write          # comment back on the triggering issue
+  pull-requests: write   # open the resulting PR
+
+jobs:
+  # Gatekeeper: only proceed for the `fix-me` label or the `@openhands-agent` macro, so a
+  # random label or comment does not spin up the (paid) resolver.
+  call-openhands-resolver:
+    if: >-
+      (github.event_name == 'issues' && github.event.label.name == 'fix-me') ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'fix-me') ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@openhands-agent')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@openhands-agent')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@openhands-agent'))
+    # VERIFY + PIN before enabling: confirm this reference and tag against current OpenHands docs.
+    uses: OpenHands/OpenHands/.github/workflows/openhands-resolver.yml@main
+    with:
+      macro: ${{ vars.OPENHANDS_MACRO || '@openhands-agent' }}
+      max_iterations: ${{ vars.OPENHANDS_MAX_ITER || 50 }}
+      target_branch: ${{ vars.TARGET_BRANCH || 'main' }}
+      LLM_MODEL: ${{ vars.LLM_MODEL || 'anthropic/claude-3-5-sonnet-20241022' }}
+      base_container_image: ${{ vars.OPENHANDS_BASE_CONTAINER_IMAGE || '' }}
+    secrets:
+      # INERT until this is set as a real secret — see the header. Referenced by NAME only;
+      # no real value lives in the repo. Unset => the resolver has no key and does nothing.
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+      # GitHub identity the resolver commits/opens the PR as. Prefer a scoped PAT / App token;
+      # both referenced by name only, set in repo/org settings, never committed.
+      PAT_USERNAME: ${{ secrets.PAT_USERNAME }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
