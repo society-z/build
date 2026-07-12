@@ -1,11 +1,14 @@
 {
-  "_comment": "Copy to config.json (gitignored) OR set as env vars. NEVER commit real values. The gate is read-only on-chain; the only secret is the RPC key and the gate's signing key.",
+  "_comment": "Z_MINT and Z_THRESHOLD are PUBLIC and canonical — published here on purpose so this repo is an authoritative source of the official mint address. Secrets (RPC key, gate signing key) are NEVER committed; they come from env. To run: copy to config.json (gitignored) or set env vars.",
 
-  "Z_MINT": "REPLACE_WITH_Z_MINT_ADDRESS",
-  "Z_THRESHOLD": 25000,
+  "Z_MINT": "4ss9wz5gaieaizHYkrNMQQnXKW19wWrJGLP2QxhUpump",
+  "Z_THRESHOLD": 1000000,
+
+  "_mint_note": "The only official $Z mint. Verify against societyz.xyz/enter and the pump.fun page. Mint and freeze authority are both revoked. Token-2022 program.",
+  "_threshold_note": "Propose-tier floor in $Z (uiAmount). 1,000,000 $Z = 0.1% of the 1B supply. Low on purpose so a price move never locks members out; revisited by governance.",
 
   "_env": {
-    "HELIUS_RPC_URL": "read from process.env.HELIUS_RPC_URL — includes your Helius API key, never commit",
+    "HELIUS_RPC_URL": "read from process.env.HELIUS_RPC_URL — includes your Helius API key, never commit. A public RPC (https://api.mainnet-beta.solana.com) works for low volume; Helius is recommended for reliability.",
     "GATE_SIGNING_SECRET_KEY": "read from process.env.GATE_SIGNING_SECRET_KEY — base58 ed25519 secret of the gate's verdict key, never commit. If unset, verdicts are returned unsigned.",
     "SECOND_RPC_URL": "optional read from process.env.SECOND_RPC_URL — a second provider for fail-closed agreement checks (see honest failure modes)"
   }
