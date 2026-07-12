@@ -30,6 +30,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
+      - name: Write links table from secret
+        env:
+          LINKS_JSON: ${{ secrets.LINKS_JSON }}
+        run: |
+          if [ -n "$LINKS_JSON" ]; then
+            echo "$LINKS_JSON" > maintainer/links.json
+          else
+            echo "{}" > maintainer/links.json
+          fi
       - name: Run maintainer bot
         env:
           # GitHub identity. Prefer a GitHub App installation token; GITHUB_TOKEN is the fallback.
