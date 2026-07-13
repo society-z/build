@@ -36,6 +36,11 @@ const CFG = {
   port: Number(process.env.PORT || 8787),
   // Cookie Secure flag. On (default) for prod/https. Set INSECURE_COOKIES=1 for local http dev.
   secureCookies: process.env.INSECURE_COOKIES ? false : true,
+  // Only the session cookie gets a parent-domain scope (e.g. ".societyz.xyz") so other
+  // subdomains (like the dashboard) can read a session minted here. Unset in local dev --
+  // browsers reject a Domain attribute that doesn't match the actual host. The CSRF state
+  // cookie deliberately stays host-only; it never needs to leave this server.
+  sessionCookieDomain: process.env.SESSION_COOKIE_DOMAIN || "",
   // Shared secret the maintainer bot's GitHub Action uses to pull the current links table at
   // the start of each run, so a real OAuth+SIWS link is visible to the gate without anyone
   // manually re-uploading a links.json secret. Required for /api/links-export to respond.
@@ -127,7 +132,7 @@ function parseCookies(header) {
   }
   return out;
 }
-function cookie(name, value, { maxAge } = {}) {
+function cookie(name, value, { maxAge, domain } = {}) {
   const bits = [
     `${name}=${encodeURIComponent(value)}`,
     "Path=/",
@@ -136,6 +141,7 @@ function cookie(name, value, { maxAge } = {}) {
   ];
   if (CFG.secureCookies) bits.push("Secure");
   if (typeof maxAge === "number") bits.push(`Max-Age=${maxAge}`);
+  if (domain) bits.push(`Domain=${domain}`);
   return bits.join("; ");
 }
 function clearCookie(name) {
@@ -298,7 +304,10 @@ async function handle(req, res) {
     const session = makeSession({ id: ghUser.id, login: ghUser.login });
     res.writeHead(302, {
       location: "/link",
-      "set-cookie": [clearState, cookie("sz_session", session, { maxAge: SESSION_TTL_MS / 1000 })],
+      "set-cookie": [
+        clearState,
+        cookie("sz_session", session, { maxAge: SESSION_TTL_MS / 1000, domain: CFG.sessionCookieDomain || undefined }),
+      ],
     });
     return res.end();
   }
