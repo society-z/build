@@ -20,18 +20,21 @@ function stubFetch(uiAmount) {
   });
 }
 
-const config = {
-  Z_MINT: "TestMint1111111111111111111111111111111111",
-  Z_THRESHOLD: 1000000,
-  HELIUS_RPC_URL: "https://stub.invalid/rpc",
-  // no signing key -> gate verdict is unsigned; still a valid shape
-};
+// gate's config comes from server-side env only now (caller-supplied config is ignored --
+// that was the fix for the "PR-controlled data can override the mint/threshold" finding).
+// Same pattern as skills/gate/smoke.mjs and maintainer/test/e2e.test.mjs.
+process.env.Z_MINT = "TestMint1111111111111111111111111111111111";
+process.env.Z_THRESHOLD = "1000000";
+process.env.HELIUS_RPC_URL = "https://stub.invalid/rpc";
+const config = {};
+
+const WALLET = "ReqBuiLDwaLLET111111111111111111111111111111"; // valid base58, passes address check
 
 const idea = "Add a dark mode toggle to the roster page\n\nIt should remember the choice.";
 
 // Case 1: above threshold -> authorized, returns the exact issue it WOULD create (dry-run only).
 stubFetch(2000000);
-let out = await run({ wallet: "TestWallet1111111111111111111111111111111", github_login: "octocat", idea, config });
+let out = await run({ wallet: WALLET, github_login: "octocat", idea, config });
 assert(out.authorized === true, "2,000,000 >= 1,000,000 should authorize");
 assert(out.dry_run === true, "dry_run is always true — skill never mutates GitHub");
 assert(out.would_create && typeof out.would_create === "object", "would_create present when authorized");
@@ -44,7 +47,7 @@ assert(out.gate && out.gate.pass === true, "full gate verdict attached for audit
 
 // Case 2: below threshold -> fail closed: not authorized, nothing to create.
 stubFetch(100);
-out = await run({ wallet: "TestWallet1111111111111111111111111111111", github_login: "octocat", idea, config });
+out = await run({ wallet: WALLET, github_login: "octocat", idea, config });
 assert(out.authorized === false, "100 < 1,000,000 should deny (fail closed)");
 assert(out.would_create === null, "no issue proposed when unauthorized");
 assert(/not authorized/.test(out.reason), "reason explains denial");

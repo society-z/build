@@ -6,9 +6,10 @@
 # SPEC/wiring: secrets are referenced by NAME only; set real values in repo/org settings. The bot
 # fails CLOSED — any missing secret, RPC error, or multi-RPC disagreement leaves the status red.
 #
-# NOTE: the v1 links lookup reads maintainer/links.json (gitignored). For a real deployment,
-# replace fileLinks() with supabaseLinks() in maintainer/links.mjs (reads the SIWS links table)
-# and drop LINKS_FILE. See maintainer/README.md.
+# Links table: fetched live from the real SIWS+OAuth link server's /api/links-export at the
+# start of every run (LINKS_EXPORT_URL + LINKS_EXPORT_SECRET), so a link made at
+# link.societyz.xyz is visible to the gate immediately, not on the next manual secret update.
+# Falls back to the static LINKS_JSON secret if the export isn't configured.
 
 name: society-z maintainer
 
@@ -30,11 +31,20 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - name: Write links table from secret
+      - name: Write links table (live export, falls back to static secret)
         env:
+          LINKS_EXPORT_URL: ${{ secrets.LINKS_EXPORT_URL }}
+          LINKS_EXPORT_SECRET: ${{ secrets.LINKS_EXPORT_SECRET }}
           LINKS_JSON: ${{ secrets.LINKS_JSON }}
         run: |
-          if [ -n "$LINKS_JSON" ]; then
+          if [ -n "$LINKS_EXPORT_URL" ] && [ -n "$LINKS_EXPORT_SECRET" ]; then
+            HTTP_CODE=$(curl -s -o maintainer/links.json -w '%{http_code}' \
+              -H "x-export-secret: $LINKS_EXPORT_SECRET" "$LINKS_EXPORT_URL")
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "links export fetch failed (HTTP $HTTP_CODE) -- failing closed, not merging blind"
+              echo "{}" > maintainer/links.json
+            fi
+          elif [ -n "$LINKS_JSON" ]; then
             echo "$LINKS_JSON" > maintainer/links.json
           else
             echo "{}" > maintainer/links.json
